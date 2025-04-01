@@ -49,21 +49,29 @@ function MyTabs() {
           tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,
         }}
       />
+       <Tabs.Screen
+        name="Exercice"
+        options={{
+          title: "Exercice",
+          tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,
+        }}
+      />
       <Tabs.Screen
-        name="../recette"
+        name="recette"
         options={{
           title: "Recette",
           tabBarIcon: ({ size, color }) => <TabBarIcon name="book" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="../profil"
+        name="profil"
         options={{
           title: "Profil",
           tabBarIcon: ({ size, color }) => <TabBarIcon name="person" size={size} color={color} />,
         }}
       />
     </Tabs>
+    
   );
 }
 
