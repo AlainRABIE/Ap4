@@ -1,0 +1,165 @@
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
+} from 'react-native';
+import { TextInput, Button, RadioButton } from 'react-native-paper';
+import { getFirestore, doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { saveUserProfile } from '../../services/calorie';
+import app from '../../firebase/firebaseConfig';
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const ProfileData = ({ navigation }: any) => {
+    const [poids, setPoids] = useState('');
+    const [taille, setTaille] = useState('');
+    const [age, setAge] = useState('');
+    const [sexe, setSexe] = useState('homme');
+    const [niveauActivite, setNiveauActivite] = useState('sedentaire');
+
+    const handleSaveProfile = async () => {
+        try {
+            if (!poids || !taille || !age) {
+                Alert.alert('Erreur', 'Tous les champs doivent être remplis.');
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                Alert.alert('Erreur', 'Aucun utilisateur connecté.');
+                return;
+            }
+
+            // Calcul des besoins caloriques (remplacez par votre logique)
+            const caloriesNecessaires = await saveUserProfile(
+                'Nom Complet', // Remplacez par le nom complet si nécessaire
+                poids,
+                taille,
+                age,
+                sexe,
+                niveauActivite
+            );
+
+            // Mise à jour des données dans Firestore
+            const userDocRef = doc(db, 'utilisateurs', user.uid);
+            await updateDoc(userDocRef, {
+                poids: parseFloat(poids), // Convertir en nombre
+                taille: parseFloat(taille), // Convertir en nombre
+                age: parseInt(age, 10), // Convertir en nombre entier
+                sexe: sexe,
+                niveauActivite: niveauActivite,
+                caloriesNecessaires: caloriesNecessaires,
+                derniereModification: Timestamp.fromDate(new Date()), // Date actuelle
+            });
+
+            Alert.alert('Succès', `Votre besoin calorique quotidien est de ${caloriesNecessaires} kcal.`);
+            navigation.replace('ActivityLevel');
+        } catch (error: any) {
+            Alert.alert('Erreur', error.message || 'Une erreur est survenue.');
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.inner}>
+                    <Text style={styles.title}>Complétez vos informations</Text>
+
+                    <TextInput
+                        label="Poids (kg)"
+                        value={poids}
+                        onChangeText={(text) => setPoids(text.replace(/[^0-9]/g, ''))} // Autorise uniquement les chiffres
+                        keyboardType="numeric"
+                        style={styles.input}
+                    />
+
+                    <TextInput
+                        label="Taille (cm)"
+                        value={taille}
+                        onChangeText={(text) => setTaille(text.replace(/[^0-9]/g, ''))} // Autorise uniquement les chiffres
+                        keyboardType="numeric"
+                        style={styles.input}
+                    />
+
+                    <TextInput
+                        label="Âge"
+                        value={age}
+                        onChangeText={(text) => setAge(text.replace(/[^0-9]/g, ''))} // Autorise uniquement les chiffres
+                        keyboardType="numeric"
+                        style={styles.input}
+                    />
+
+                    <Text style={styles.label}>Sexe</Text>
+                    <RadioButton.Group onValueChange={setSexe} value={sexe}>
+                        <View style={styles.radioGroup}>
+                            <RadioButton.Item label="Homme" value="homme" />
+                            <RadioButton.Item label="Femme" value="femme" />
+                        </View>
+                    </RadioButton.Group>
+
+                    <Text style={styles.label}>Niveau d'activité</Text>
+                    <RadioButton.Group onValueChange={setNiveauActivite} value={niveauActivite}>
+                        <View style={styles.radioGroup}>
+                            <RadioButton.Item label="Sédentaire" value="sedentaire" />
+                            <RadioButton.Item label="Légère" value="legere" />
+                            <RadioButton.Item label="Modéré" value="moderee" />
+                            <RadioButton.Item label="Intense" value="intense" />
+                        </View>
+                    </RadioButton.Group>
+
+                    <Button mode="contained" onPress={handleSaveProfile} style={styles.button}>
+                        Enregistrer
+                    </Button>
+                </View>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    inner: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    title: {
+        fontSize: 24,
+        marginBottom: 20,
+        fontWeight: 'bold',
+    },
+    input: {
+        width: '100%',
+        marginBottom: 15,
+    },
+    label: {
+        marginBottom: 5,
+        fontSize: 16,
+        color: '#555',
+    },
+    radioGroup: {
+        flexDirection: 'row',
+        justifyContent: 'space-evenly',
+        marginBottom: 15,
+    },
+    button: {
+        marginTop: 20,
+        width: '100%',
+    },
+});
+
+export default ProfileData;

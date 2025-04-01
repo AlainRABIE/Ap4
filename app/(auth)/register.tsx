@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { register } from '../../services/auth'; 
+import { register } from '../../services/auth'; // Assure-toi d'utiliser ta fonction d'inscription
+import { useRouter } from 'expo-router'; // Utilisez useRouter pour la navigation
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const router = useRouter(); // Hook de navigation
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -14,8 +17,11 @@ const Register = () => {
     }
 
     try {
-      const user = await register(email, password);
+      const user = await register(email, password, 'Nom Complet', 'Autre Argument');
       Alert.alert('Succès', `Compte créé pour : ${user.email}`);
+      
+      // Rediriger vers la page Donnee après l'inscription réussie
+      router.replace('/donnee'); // Utilisez le chemin de la route
     } catch (error: any) {
       Alert.alert('Erreur', error.message || 'Une erreur est survenue.');
     }

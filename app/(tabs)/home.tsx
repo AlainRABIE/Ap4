@@ -10,7 +10,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pedometer } from "expo-sensors";
-import { useRouter } from "expo-router"; // Importer le hook de navigation
+import { useRouter } from "expo-router";
+import { saveUserProfile } from "../../services/calorie"; // Importez votre service de calcul calorique
 
 const NutritionScreen = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
@@ -19,7 +20,12 @@ const NutritionScreen = () => {
   const [steps, setSteps] = useState(0);
   const [isPedometerAvailable, setIsPedometerAvailable] = useState(false);
 
-  const router = useRouter(); // Initialiser le hook de navigation
+  // États pour les calories
+  const [caloriesTotales, setCaloriesTotales] = useState(0);
+  const [caloriesRestantes, setCaloriesRestantes] = useState(0);
+  const [caloriesBrulees, setCaloriesBrulees] = useState(0);
+
+  const router = useRouter();
 
   useEffect(() => {
     const startPedometer = async () => {
@@ -36,6 +42,39 @@ const NutritionScreen = () => {
     };
 
     startPedometer();
+  }, []);
+
+  // Appeler le service pour calculer les calories
+  useEffect(() => {
+    const fetchCalories = async () => {
+      try {
+        // Exemple de données utilisateur (remplacez-les par les vraies données)
+        const poids = 70; // Poids en kg
+        const taille = 175; // Taille en cm
+        const age = 25; // Âge en années
+        const sexe = "homme"; // Sexe : "homme" ou "femme"
+        const niveauActivite = "moderee"; // Niveau d'activité
+
+        // Appel du service pour calculer les calories
+        const calories = await saveUserProfile(
+          "Nom Complet",
+          poids.toString(),
+          taille.toString(),
+          age.toString(),
+          sexe,
+          niveauActivite
+        );
+
+        // Mettre à jour les états avec les valeurs calculées
+        setCaloriesTotales(calories);
+        setCaloriesRestantes(calories - 400); // Exemple : 400 kcal consommées
+        setCaloriesBrulees(300); // Exemple : 300 kcal brûlées
+      } catch (error) {
+        console.error("Erreur lors du calcul des calories :", error);
+      }
+    };
+
+    fetchCalories();
   }, []);
 
   const handleAddGlass = () => {
@@ -81,15 +120,15 @@ const NutritionScreen = () => {
 
         <View style={[styles.section, styles.circlesContainer]}>
           <LinearGradient colors={["#FF9A8B", "#FF6A88"]} style={styles.circleProgress}>
-            <Text style={styles.circleBigNumber}>1,200</Text>
+            <Text style={styles.circleBigNumber}>{caloriesTotales}</Text>
             <Text style={styles.circleLabel}>Calories</Text>
           </LinearGradient>
           <LinearGradient colors={["#A18CD1", "#FBC2EB"]} style={styles.circleProgress}>
-            <Text style={styles.circleBigNumber}>800</Text>
+            <Text style={styles.circleBigNumber}>{caloriesRestantes}</Text>
             <Text style={styles.circleLabel}>Restantes</Text>
           </LinearGradient>
           <LinearGradient colors={["#84FAB0", "#8FD3F4"]} style={styles.circleProgress}>
-            <Text style={styles.circleBigNumber}>300</Text>
+            <Text style={styles.circleBigNumber}>{caloriesBrulees}</Text>
             <Text style={styles.circleLabel}>Brûlées</Text>
           </LinearGradient>
         </View>
@@ -116,41 +155,6 @@ const NutritionScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {["Petit déjeuner", "Déjeuner", "Dîner", "En-cas"].map((meal, index) => (
-          <View key={index} style={styles.mealItem}>
-            <Ionicons name="fast-food-outline" size={24} color="#FF6A88" />
-            <View style={styles.mealInfo}>
-              <Text style={styles.mealName}>{meal}</Text>
-              <Text style={styles.mealCalories}>200 / 500 kcal</Text>
-            </View>
-            {(meal === "Petit déjeuner" || meal === "Déjeuner" || meal === "Dîner") && ( // Ajouter un bouton spécifique pour le petit-déjeuner, déjeuner et dîner
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() =>
-                  meal === "Petit déjeuner"
-                    ? router.push("/(tabs)/Add") // Rediriger vers Add.tsx
-                    : meal === "Déjeuner"
-                      ? router.push("/(tabs)/AddMidi") // Rediriger vers AddMidi.tsx
-                      : router.push("/(tabs)/AddSoir") // Rediriger vers AddSoir.tsx
-                }
-              >
-                <Text style={styles.addButtonText}>+</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
-        <LinearGradient
-          colors={["#84FAB0", "#8FD3F4"]}
-          style={[styles.section, styles.activityContainer]}
-        >
-          <Text style={styles.activityTitle}>Activité physique</Text>
-          {isPedometerAvailable ? (
-            <Text style={styles.activitySteps}>Pas effectués : {steps}</Text>
-          ) : (
-            <Text style={styles.activityUnavailable}>Podomètre non disponible</Text>
-          )}
-        </LinearGradient>
       </ScrollView>
     </SafeAreaView>
   );

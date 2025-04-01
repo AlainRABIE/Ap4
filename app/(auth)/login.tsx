@@ -22,7 +22,7 @@ export default function Login() {
   };
 
   const navigateToRegister = () => {
-    router.push("./Register");
+    router.push("./register");
   };
 
   return (
