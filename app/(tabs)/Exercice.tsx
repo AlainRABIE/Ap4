@@ -1,18 +1,29 @@
-import React from "react";
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Animated, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router"; // Importer le hook de navigation
 
 const exercises = [
-  { id: "1", name: "Abdos", image: require("../../img/abdo.png"), route: "/(tabs)/abdoexo" },
-  { id: "2", name: "Dorsaux", image: require("../../img/dos.png"), route: "/(tabs)/dosexo" }, // Pas encore défini
+  { id: "1", name: "Abdos", image: require("../../img/abdo.png"), route: "/(exo)/abdoexo" },
+  { id: "2", name: "Dorsaux", image: require("../../img/dos.png"), route: "/(exo)/abdoexo" }, // Pas encore défini
   { id: "3", name: "Biceps", image: require("../../img/biceps.png"), route: "/(tabs)/biceps" }, // Pas encore défini
   { id: "4", name: "Jambe", image: require("../../img/jambe.png"), route: "/(tabs)/jambeexo" },
   { id: "5", name: "Pectoraux", image: require("../../img/peck.png"), route: "/(tabs)peckexo" }, // Pas encore défini
 ];
 
+const subscriptions = [
+  { id: "1", name: "Abonnement Mensuel", price: "9,99€ / mois" },
+  { id: "2", name: "Abonnement Trimestriel", price: "24,99€ / 3 mois" },
+  { id: "3", name: "Abonnement Annuel", price: "89,99€ / an" },
+];
+
 export default function ExercisesScreen() {
   const router = useRouter(); // Initialiser le hook de navigation
+  const [showSubscriptions, setShowSubscriptions] = useState(false); // État pour afficher ou masquer les abonnements
+
+  const toggleSubscriptions = () => {
+    setShowSubscriptions(!showSubscriptions);
+  };
 
   return (
     <View style={styles.container}>
@@ -23,12 +34,11 @@ export default function ExercisesScreen() {
           <Ionicons name="barbell" size={24} color="white" />
           <Text style={styles.upgradeText}>Fitness & Musculation PRO</Text>
         </View>
-        <TouchableOpacity style={styles.upgradeButton}>
+        <TouchableOpacity style={styles.upgradeButton} onPress={toggleSubscriptions}>
           <Text style={styles.upgradeButtonText}>MISE À NIVEAU MAINTENANT</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Liste des exercices */}
       <FlatList
         data={exercises}
         keyExtractor={(item) => item.id}
@@ -49,7 +59,28 @@ export default function ExercisesScreen() {
         )}
       />
 
-      <View style={styles.navBar}></View>
+      {/* Modal pour les abonnements */}
+      <Modal
+        visible={showSubscriptions}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={toggleSubscriptions}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.subscriptionContainer}>
+            <Text style={styles.modalTitle}>Choisissez un abonnement</Text>
+            {subscriptions.map((sub) => (
+              <View key={sub.id} style={styles.subscriptionItem}>
+                <Text style={styles.subscriptionName}>{sub.name}</Text>
+                <Text style={styles.subscriptionPrice}>{sub.price}</Text>
+              </View>
+            ))}
+            <TouchableOpacity style={styles.closeButton} onPress={toggleSubscriptions}>
+              <Text style={styles.closeButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -61,14 +92,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4F4",
   },
   header: {
-    backgroundColor: "#E64A19",
+    backgroundColor: "transparent",
     padding: 20,
     alignItems: "center",
   },
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "white",
+    color: "#333",
   },
   upgradeBox: {
     flexDirection: "row",
@@ -76,20 +107,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   upgradeText: {
-    color: "white",
+    color: "#333",
     marginLeft: 10,
     fontSize: 16,
   },
   upgradeButton: {
-    backgroundColor: "#D84315",
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: "#FF6A88",
+    paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius: 10,
     marginTop: 10,
   },
   upgradeButtonText: {
-    color: "white",
+    color: "#FF6A88",
     fontWeight: "bold",
+    fontSize: 16,
   },
   item: {
     flexDirection: "row",
@@ -110,17 +143,52 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
   },
-  navBar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#E64A19",
-    paddingVertical: 10,
-  },
-  navItem: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Fond semi-transparent
+    justifyContent: "center",
     alignItems: "center",
   },
-  navText: {
+  subscriptionContainer: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#333",
+  },
+  subscriptionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  subscriptionName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  subscriptionPrice: {
+    fontSize: 16,
+    color: "#FF6A88",
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "#FF6A88",
+    paddingVertical: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  closeButtonText: {
     color: "white",
-    fontSize: 12,
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

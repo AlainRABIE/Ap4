@@ -1,15 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Pedometer } from 'expo-sensors';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { Pedometer } from "expo-sensors";
+import { useRouter } from "expo-router"; // Importer le hook de navigation
 
 const NutritionScreen = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
-  const [streak, setStreak] = useState(3); 
-  const [waterGlasses, setWaterGlasses] = useState(0); 
-  const [steps, setSteps] = useState(0); 
+  const [streak, setStreak] = useState(3);
+  const [waterGlasses, setWaterGlasses] = useState(0);
+  const [steps, setSteps] = useState(0);
   const [isPedometerAvailable, setIsPedometerAvailable] = useState(false);
+
+  const router = useRouter(); // Initialiser le hook de navigation
 
   useEffect(() => {
     const startPedometer = async () => {
@@ -29,7 +39,7 @@ const NutritionScreen = () => {
   }, []);
 
   const handleAddGlass = () => {
-    if (waterGlasses < 8) setWaterGlasses(waterGlasses + 1); 
+    if (waterGlasses < 8) setWaterGlasses(waterGlasses + 1);
   };
 
   const handleRemoveGlass = () => {
@@ -40,13 +50,25 @@ const NutritionScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.dayNavigationBar}>
-          <TouchableOpacity onPress={() => setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)))}>
+          <TouchableOpacity
+            onPress={() =>
+              setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)))
+            }
+          >
             <Ionicons name="chevron-back-outline" size={28} color="#4FC3F7" />
           </TouchableOpacity>
           <Text style={styles.dayNavigationText}>
-            {currentDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {currentDay.toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
           </Text>
-          <TouchableOpacity onPress={() => setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)))}>
+          <TouchableOpacity
+            onPress={() =>
+              setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)))
+            }
+          >
             <Ionicons name="chevron-forward-outline" size={28} color="#4FC3F7" />
           </TouchableOpacity>
           {streak > 0 && (
@@ -58,15 +80,15 @@ const NutritionScreen = () => {
         </View>
 
         <View style={[styles.section, styles.circlesContainer]}>
-          <LinearGradient colors={['#FF9A8B', '#FF6A88']} style={styles.circleProgress}>
+          <LinearGradient colors={["#FF9A8B", "#FF6A88"]} style={styles.circleProgress}>
             <Text style={styles.circleBigNumber}>1,200</Text>
             <Text style={styles.circleLabel}>Calories</Text>
           </LinearGradient>
-          <LinearGradient colors={['#A18CD1', '#FBC2EB']} style={styles.circleProgress}>
+          <LinearGradient colors={["#A18CD1", "#FBC2EB"]} style={styles.circleProgress}>
             <Text style={styles.circleBigNumber}>800</Text>
             <Text style={styles.circleLabel}>Restantes</Text>
           </LinearGradient>
-          <LinearGradient colors={['#84FAB0', '#8FD3F4']} style={styles.circleProgress}>
+          <LinearGradient colors={["#84FAB0", "#8FD3F4"]} style={styles.circleProgress}>
             <Text style={styles.circleBigNumber}>300</Text>
             <Text style={styles.circleLabel}>Brûlées</Text>
           </LinearGradient>
@@ -78,9 +100,9 @@ const NutritionScreen = () => {
             {Array.from({ length: 8 }).map((_, index) => (
               <Ionicons
                 key={index}
-                name={index < waterGlasses ? 'water' : 'water-outline'}
+                name={index < waterGlasses ? "water" : "water-outline"}
                 size={40}
-                color={index < waterGlasses ? '#4FC3F7' : '#B0BEC5'}
+                color={index < waterGlasses ? "#4FC3F7" : "#B0BEC5"}
                 style={styles.waterGlassIcon}
               />
             ))}
@@ -95,22 +117,33 @@ const NutritionScreen = () => {
           </View>
         </View>
 
-        <View style={[styles.section, styles.mealList]}>
-          {['Petit déjeuner', 'Déjeuner', 'Dîner', 'En-cas'].map((meal, index) => (
-            <View key={index} style={styles.mealItem}>
-              <Ionicons name="fast-food-outline" size={24} color="#FF6A88" />
-              <View style={styles.mealInfo}>
-                <Text style={styles.mealName}>{meal}</Text>
-                <Text style={styles.mealCalories}>200 / 500 kcal</Text>
-              </View>
-              <TouchableOpacity style={styles.addButton}>
+        {["Petit déjeuner", "Déjeuner", "Dîner", "En-cas"].map((meal, index) => (
+          <View key={index} style={styles.mealItem}>
+            <Ionicons name="fast-food-outline" size={24} color="#FF6A88" />
+            <View style={styles.mealInfo}>
+              <Text style={styles.mealName}>{meal}</Text>
+              <Text style={styles.mealCalories}>200 / 500 kcal</Text>
+            </View>
+            {(meal === "Petit déjeuner" || meal === "Déjeuner" || meal === "Dîner") && ( // Ajouter un bouton spécifique pour le petit-déjeuner, déjeuner et dîner
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() =>
+                  meal === "Petit déjeuner"
+                    ? router.push("/(tabs)/Add") // Rediriger vers Add.tsx
+                    : meal === "Déjeuner"
+                      ? router.push("/(tabs)/AddMidi") // Rediriger vers AddMidi.tsx
+                      : router.push("/(tabs)/AddSoir") // Rediriger vers AddSoir.tsx
+                }
+              >
                 <Text style={styles.addButtonText}>+</Text>
               </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-
-        <LinearGradient colors={['#84FAB0', '#8FD3F4']} style={[styles.section, styles.activityContainer]}>
+            )}
+          </View>
+        ))}
+        <LinearGradient
+          colors={["#84FAB0", "#8FD3F4"]}
+          style={[styles.section, styles.activityContainer]}
+        >
           <Text style={styles.activityTitle}>Activité physique</Text>
           {isPedometerAvailable ? (
             <Text style={styles.activitySteps}>Pas effectués : {steps}</Text>
@@ -129,7 +162,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   scrollContent: {
-    paddingBottom: 30, 
+    paddingBottom: 30,
   },
   section: {
     marginBottom: 20,
@@ -143,7 +176,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
-    marginBottom: 20, 
+    marginBottom: 20,
   },
   dayNavigationText: {
     fontSize: 18,

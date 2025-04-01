@@ -2,7 +2,6 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, StyleSheet } from "react-native";
-import { BlurView } from "expo-blur";
 
 function TabBarIcon({ name, color, size }: { name: keyof typeof Ionicons.glyphMap; color: string; size: number }) {
   return (
@@ -14,28 +13,17 @@ function TabBarIcon({ name, color, size }: { name: keyof typeof Ionicons.glyphMa
 
 function MyTabs() {
   const screenOptions = {
-    headerShown: false,
+    headerShown: false, // Désactiver complètement l'en-tête pour tous les écrans
     tabBarStyle: {
-      position: 'absolute' as const,
+      position: "absolute" as const,
       left: 24,
       right: 24,
       bottom: 16,
       elevation: 0,
-      backgroundColor: 'transparent',
+      backgroundColor: "transparent",
       borderTopWidth: 0,
       borderRadius: 30,
     },
-    tabBarBackground: () => (
-      <BlurView
-        intensity={50}
-        tint="light"
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          borderRadius: 30,
-          overflow: 'hidden',
-        }}
-      />
-    ),
     tabBarActiveTintColor: "#FF6A88",
     tabBarInactiveTintColor: "#B0BEC5",
   };
@@ -49,11 +37,11 @@ function MyTabs() {
           tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,
         }}
       />
-       <Tabs.Screen
+      <Tabs.Screen
         name="Exercice"
         options={{
           title: "Exercice",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,
+          tabBarIcon: ({ size, color }) => <TabBarIcon name="barbell" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -71,7 +59,6 @@ function MyTabs() {
         }}
       />
     </Tabs>
-    
   );
 }
 
