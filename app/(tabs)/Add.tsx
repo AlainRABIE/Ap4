@@ -4,51 +4,47 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  Image,
   StyleSheet,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router"; // Importer le hook de navigation
-import * as ImagePicker from "expo-image-picker"; // Importer ImagePicker pour la prise de photo
-
-interface Meal {
-  id: string;
-  name: string;
-  calories: number;
-}
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 
 export default function AddMeal() {
   const [mealName, setMealName] = useState("");
   const [calories, setCalories] = useState("");
-  const [meals, setMeals] = useState<Meal[]>([]);
   const [photo, setPhoto] = useState<string | null>(null); // État pour stocker la photo
+  const router = useRouter();
+  const db = getFirestore();
 
-  const router = useRouter(); // Initialiser le hook de navigation
-
-  const addMeal = () => {
+  const handleConfirm = async () => {
     if (!mealName || !calories) {
       Alert.alert("Erreur", "Veuillez entrer un aliment et le nombre de calories.");
       return;
     }
 
-    const newMeal: Meal = {
-      id: Math.random().toString(),
-      name: mealName,
-      calories: parseInt(calories),
-    };
+    try {
+      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // Remplacez par l'ID utilisateur connecté
+      const newMeal = {
+        nom: mealName,
+        calories: parseInt(calories),
+        Repas: "Petit-déjeuner", // Ajouter automatiquement "Petit-déjeuner"
+        urlPhoto: photo || "", // Ajouter l'URL de la photo si elle existe
+        utilisateurId: userId,
+        date: new Date().toISOString(),
+      };
 
-    setMeals([...meals, newMeal]);
-    setMealName("");
-    setCalories("");
+      await addDoc(collection(db, "aliments"), newMeal); // Ajouter dans Firebase
+      Alert.alert("Succès", "Repas ajouté avec succès !");
+      router.back(); // Retour à la page précédente
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du repas :", error);
+      Alert.alert("Erreur", "Impossible d'ajouter le repas.");
+    }
   };
-
-  const renderMeal = ({ item }: { item: Meal }) => (
-    <View style={styles.mealItem}>
-      <Text style={styles.mealName}>{item.name}</Text>
-      <Text style={styles.mealCalories}>{item.calories} kcal</Text>
-    </View>
-  );
 
   const takePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -94,22 +90,21 @@ export default function AddMeal() {
         keyboardType="numeric"
       />
 
-      <TouchableOpacity style={styles.addButton} onPress={addMeal}>
-        <Text style={styles.addButtonText}>Ajouter</Text>
-      </TouchableOpacity>
-
-      {/* Rectangle avec le logo de l'appareil photo */}
+      {/* Bouton pour prendre une photo */}
       <TouchableOpacity style={styles.cameraContainer} onPress={takePhoto}>
         <Ionicons name="camera" size={32} color="#fff" />
         <Text style={styles.cameraText}>Prendre une photo</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={meals}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMeal}
-        contentContainerStyle={styles.listContainer}
-      />
+      {/* Aperçu de la photo */}
+      {photo && (
+        <Image source={{ uri: photo }} style={styles.photoPreview} />
+      )}
+
+      {/* Bouton pour confirmer */}
+      <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+        <Text style={styles.confirmButtonText}>Confirmer</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -145,40 +140,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: "#fff",
   },
-  addButton: {
-    backgroundColor: "#FF6A88",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
-  mealItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-  },
-  mealName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  mealCalories: {
-    fontSize: 16,
-    color: "#FF6A88",
-  },
   cameraContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -193,5 +154,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
     fontWeight: "bold",
+  },
+  photoPreview: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  confirmButton: {
+    backgroundColor: "#4CAF50",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

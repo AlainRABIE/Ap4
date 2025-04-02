@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pedometer } from "expo-sensors";
 import { useRouter } from "expo-router";
-import { saveUserProfile } from "../../services/calorie"; // Importez votre service de calcul calorique
+import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
 
 const NutritionScreen = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
@@ -24,6 +24,9 @@ const NutritionScreen = () => {
   const [caloriesTotales, setCaloriesTotales] = useState(0);
   const [caloriesRestantes, setCaloriesRestantes] = useState(0);
   const [caloriesBrulees, setCaloriesBrulees] = useState(0);
+
+  // État pour les calories du Petit-déjeuner
+  const [breakfastCalories, setBreakfastCalories] = useState(0);
 
   const router = useRouter();
 
@@ -55,17 +58,8 @@ const NutritionScreen = () => {
         const sexe = "homme"; // Sexe : "homme" ou "femme"
         const niveauActivite = "moderee"; // Niveau d'activité
 
-        // Appel du service pour calculer les calories
-        const calories = await saveUserProfile(
-          "Nom Complet",
-          poids.toString(),
-          taille.toString(),
-          age.toString(),
-          sexe,
-          niveauActivite
-        );
-
-        // Mettre à jour les états avec les valeurs calculées
+        // Exemple de calcul des calories (remplacez par votre logique réelle)
+        const calories = 2000; // Exemple : 2000 kcal
         setCaloriesTotales(calories);
         setCaloriesRestantes(calories - 400); // Exemple : 400 kcal consommées
         setCaloriesBrulees(300); // Exemple : 300 kcal brûlées
@@ -75,6 +69,35 @@ const NutritionScreen = () => {
     };
 
     fetchCalories();
+  }, []);
+
+  // Récupérer les calories du Petit-déjeuner depuis Firebase
+  useEffect(() => {
+    const fetchBreakfastCalories = async () => {
+      try {
+        const db = getFirestore();
+        const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // Remplacez par l'ID utilisateur connecté
+        const q = query(
+          collection(db, "aliments"),
+          where("utilisateurId", "==", userId),
+          where("Repas", "==", "Petit-déjeuner") // Filtrer par type de repas
+        );
+
+        const querySnapshot = await getDocs(q);
+        let totalCalories = 0;
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          totalCalories += parseInt(data.calories || 0); // Ajouter les calories
+        });
+
+        setBreakfastCalories(totalCalories); // Mettre à jour l'état avec les calories totales
+      } catch (error) {
+        console.error("Erreur lors de la récupération des calories :", error);
+      }
+    };
+
+    fetchBreakfastCalories();
   }, []);
 
   const handleAddGlass = () => {
@@ -116,6 +139,12 @@ const NutritionScreen = () => {
               <Text style={styles.streakText}>{streak}</Text>
             </View>
           )}
+        </View>
+
+        {/* Rectangle pour le Petit-déjeuner */}
+        <View style={styles.breakfastContainer}>
+          <Text style={styles.breakfastTitle}>Petit-déjeuner</Text>
+          <Text style={styles.breakfastCalories}>{breakfastCalories} kcal</Text>
         </View>
 
         <View style={[styles.section, styles.circlesContainer]}>
@@ -163,53 +192,71 @@ const NutritionScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   scrollContent: {
     paddingBottom: 30,
   },
-  section: {
+  breakfastContainer: {
+    backgroundColor: "#FF6A88",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
     marginBottom: 20,
   },
+  section: {
+    marginVertical: 20,
+  },
+  breakfastTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 5,
+  },
+  breakfastCalories: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+  },
   dayNavigationBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
     marginBottom: 20,
   },
   dayNavigationText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   streakContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 10,
   },
   streakText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF6A88',
+    fontWeight: "bold",
+    color: "#FF6A88",
     marginLeft: 5,
   },
   circlesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
   },
   circleProgress: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -217,95 +264,36 @@ const styles = StyleSheet.create({
   },
   circleBigNumber: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   circleLabel: {
     fontSize: 14,
-    color: '#fff',
+    color: "#fff",
   },
   waterContainer: {
     paddingHorizontal: 16,
   },
   waterTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
   waterGlasses: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
   waterGlassIcon: {
     marginHorizontal: 5,
   },
   waterButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
   },
   waterButton: {
     marginHorizontal: 10,
-  },
-  mealList: {
-    paddingHorizontal: 16,
-  },
-  mealItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  mealInfo: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  mealName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  mealCalories: {
-    fontSize: 14,
-    color: '#666',
-  },
-  addButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#FF6A88',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  activityContainer: {
-    padding: 16,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  activityTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  activitySteps: {
-    fontSize: 18,
-    color: '#fff',
-  },
-  activityUnavailable: {
-    fontSize: 18,
-    color: '#FF6A88',
   },
 });
 

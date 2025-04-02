@@ -14,11 +14,13 @@ import { getFirestore, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { saveUserProfile } from '../../services/calorie';
 import app from '../../firebase/firebaseConfig';
+import { useRouter } from 'expo-router';
 
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const ProfileData = ({ navigation }: any) => {
+const ProfileData = () => {
+    const router = useRouter();
     const [poids, setPoids] = useState('');
     const [taille, setTaille] = useState('');
     const [age, setAge] = useState('');
@@ -38,9 +40,8 @@ const ProfileData = ({ navigation }: any) => {
                 return;
             }
 
-            // Calcul des besoins caloriques (remplacez par votre logique)
             const caloriesNecessaires = await saveUserProfile(
-                'Nom Complet', // Remplacez par le nom complet si nécessaire
+                'Nom Complet', 
                 poids,
                 taille,
                 age,
@@ -48,26 +49,36 @@ const ProfileData = ({ navigation }: any) => {
                 niveauActivite
             );
 
-            // Mise à jour des données dans Firestore
             const userDocRef = doc(db, 'utilisateurs', user.uid);
             await updateDoc(userDocRef, {
-                poids: parseFloat(poids), // Convertir en nombre
-                taille: parseFloat(taille), // Convertir en nombre
-                age: parseInt(age, 10), // Convertir en nombre entier
+                poids: parseFloat(poids), 
+                taille: parseFloat(taille), 
+                age: parseInt(age, 10), 
                 sexe: sexe,
                 niveauActivite: niveauActivite,
                 caloriesNecessaires: caloriesNecessaires,
-                derniereModification: Timestamp.fromDate(new Date()), // Date actuelle
+                derniereModification: Timestamp.fromDate(new Date()), 
             });
 
-            Alert.alert('Succès', `Votre besoin calorique quotidien est de ${caloriesNecessaires} kcal.`);
-            navigation.replace('ActivityLevel');
+            Alert.alert('Succès', `Votre besoin calorique quotidien est de ${caloriesNecessaires} kcal.`,
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            router.push({
+                                pathname: "/home",
+                                params: { calories: caloriesNecessaires }
+                            });
+                        }
+                    }
+                ]
+            );
         } catch (error: any) {
             Alert.alert('Erreur', error.message || 'Une erreur est survenue.');
         }
     };
 
-    return (
+    return (    
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -79,7 +90,7 @@ const ProfileData = ({ navigation }: any) => {
                     <TextInput
                         label="Poids (kg)"
                         value={poids}
-                        onChangeText={(text) => setPoids(text.replace(/[^0-9]/g, ''))} // Autorise uniquement les chiffres
+                        onChangeText={(text) => setPoids(text.replace(/[^0-9]/g, ''))}
                         keyboardType="numeric"
                         style={styles.input}
                     />
@@ -87,15 +98,15 @@ const ProfileData = ({ navigation }: any) => {
                     <TextInput
                         label="Taille (cm)"
                         value={taille}
-                        onChangeText={(text) => setTaille(text.replace(/[^0-9]/g, ''))} // Autorise uniquement les chiffres
+                        onChangeText={(text) => setTaille(text.replace(/[^0-9]/g, ''))} 
                         keyboardType="numeric"
                         style={styles.input}
                     />
 
                     <TextInput
-                        label="Âge"
+                        label="Âge (cm)"
                         value={age}
-                        onChangeText={(text) => setAge(text.replace(/[^0-9]/g, ''))} // Autorise uniquement les chiffres
+                        onChangeText={(text) => setAge(text.replace(/[^0-9]/g, ''))} 
                         keyboardType="numeric"
                         style={styles.input}
                     />
