@@ -121,15 +121,18 @@ const NutritionScreen = () => {
   };
   
   const navigateToAddMeal = (mealType: string) => {
-    if (mealType === "Déjeuner") {
-      router.push("/AddMidi");
-    } else if (mealType === "Dîner") {
-      router.push("/AddSoir");
-    } else {
-      router.push({
-        pathname: "/Add",
-        params: { mealType }
-      });
+    switch (mealType) {
+      case "Déjeuner":
+        router.push("/(tabs)/AddMidi");
+        break;
+      case "Dîner":
+        router.push("/(tabs)/AddSoir");
+        break;
+      default:
+        router.push({
+          pathname: "/(tabs)/Add",
+          params: { mealType }
+        });
     }
   };
 

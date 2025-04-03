@@ -13,10 +13,10 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 
-export default function AddMeal() {
+export default function AddMidi() {
   const [mealName, setMealName] = useState("");
   const [calories, setCalories] = useState("");
-  const [photo, setPhoto] = useState<string | null>(null); // État pour stocker la photo
+  const [photo, setPhoto] = useState<string | null>(null);
   const router = useRouter();
   const db = getFirestore();
 
@@ -27,19 +27,19 @@ export default function AddMeal() {
     }
 
     try {
-      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // Remplacez par l'ID utilisateur connecté
+      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2";
       const newMeal = {
         nom: mealName,
         calories: parseInt(calories),
-        Repas: "Midi", // Ajouter automatiquement "Petit-déjeuner"
-        urlPhoto: photo || "", // Ajouter l'URL de la photo si elle existe
+        Repas: "Déjeuner",
+        urlPhoto: photo || "",
         utilisateurId: userId,
         date: new Date().toISOString(),
       };
 
-      await addDoc(collection(db, "aliments"), newMeal); // Ajouter dans Firebase
+      await addDoc(collection(db, "aliments"), newMeal);
       Alert.alert("Succès", "Repas ajouté avec succès !");
-      router.back(); // Retour à la page précédente
+      router.back();
     } catch (error) {
       console.error("Erreur lors de l'ajout du repas :", error);
       Alert.alert("Erreur", "Impossible d'ajouter le repas.");
@@ -61,19 +61,18 @@ export default function AddMeal() {
     });
 
     if (!result.canceled) {
-      setPhoto(result.assets[0].uri); // Stocker l'URI de la photo
+      setPhoto(result.assets[0].uri);
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Bouton Retour */}
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color="#333" />
         <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Ajouter un repas - Petit Déjeuner</Text>
+      <Text style={styles.title}>Ajouter un repas - Déjeuner</Text>
 
       <TextInput
         style={styles.input}
@@ -90,18 +89,15 @@ export default function AddMeal() {
         keyboardType="numeric"
       />
 
-      {/* Bouton pour prendre une photo */}
       <TouchableOpacity style={styles.cameraContainer} onPress={takePhoto}>
         <Ionicons name="camera" size={32} color="#fff" />
         <Text style={styles.cameraText}>Prendre une photo</Text>
       </TouchableOpacity>
 
-      {/* Aperçu de la photo */}
       {photo && (
         <Image source={{ uri: photo }} style={styles.photoPreview} />
       )}
 
-      {/* Bouton pour confirmer */}
       <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
         <Text style={styles.confirmButtonText}>Confirmer</Text>
       </TouchableOpacity>
