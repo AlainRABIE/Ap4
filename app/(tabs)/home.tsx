@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pedometer } from "expo-sensors";
 import { useRouter } from "expo-router";
-import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
 const NutritionScreen = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
@@ -25,8 +25,11 @@ const NutritionScreen = () => {
   const [caloriesRestantes, setCaloriesRestantes] = useState(0);
   const [caloriesBrulees, setCaloriesBrulees] = useState(0);
 
-  // État pour les calories du Petit-déjeuner
+  // États pour les calories par repas
   const [breakfastCalories, setBreakfastCalories] = useState(0);
+  const [lunchCalories, setLunchCalories] = useState(0);
+  const [dinnerCalories, setDinnerCalories] = useState(0);
+  const [snackCalories, setSnackCalories] = useState(0);
 
   const router = useRouter();
 
@@ -47,57 +50,66 @@ const NutritionScreen = () => {
     startPedometer();
   }, []);
 
-  // Appeler le service pour calculer les calories
   useEffect(() => {
     const fetchCalories = async () => {
       try {
-        // Exemple de données utilisateur (remplacez-les par les vraies données)
-        const poids = 70; // Poids en kg
-        const taille = 175; // Taille en cm
-        const age = 25; // Âge en années
-        const sexe = "homme"; // Sexe : "homme" ou "femme"
-        const niveauActivite = "moderee"; // Niveau d'activité
+        const db = getFirestore();
+        const userId = "1V35C7tRzUceRsXh3WqEv2qOCTJ3"; // Votre ID utilisateur
+        const userDoc = doc(db, "utilisateurs", userId);
+        const userSnap = await getDoc(userDoc);
 
-        // Exemple de calcul des calories (remplacez par votre logique réelle)
-        const calories = 2000; // Exemple : 2000 kcal
-        setCaloriesTotales(calories);
-        setCaloriesRestantes(calories - 400); // Exemple : 400 kcal consommées
-        setCaloriesBrulees(300); // Exemple : 300 kcal brûlées
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const caloriesNecessaires = userData.caloriesNecessaires || 0;
+          
+          // Calcul des calories totales consommées
+          const totalConsumed = breakfastCalories + lunchCalories + dinnerCalories + snackCalories;
+          
+          setCaloriesTotales(caloriesNecessaires);
+          setCaloriesRestantes(caloriesNecessaires - totalConsumed);
+          const caloriesBruleesParPas = 0.04; // Estimation moyenne des calories brûlées par pas
+          const caloriesBrulees = Math.round(steps * caloriesBruleesParPas);
+          setCaloriesBrulees(caloriesBrulees);
+        }
       } catch (error) {
         console.error("Erreur lors du calcul des calories :", error);
       }
     };
 
     fetchCalories();
-  }, []);
+  }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories]);
 
-  // Récupérer les calories du Petit-déjeuner depuis Firebase
+  // Fonction pour récupérer les calories par type de repas
+  const fetchMealCalories = async (mealType: unknown, setMealCalories: { (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (arg0: number): void; }) => {
+    try {
+      const db = getFirestore();
+      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // ID utilisateur
+      const q = query(
+        collection(db, "aliments"),
+        where("utilisateurId", "==", userId),
+        where("Repas", "==", mealType)
+      );
+
+      const querySnapshot = await getDocs(q);
+      let totalCalories = 0;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        totalCalories += parseInt(data.calories || 0);
+      });
+
+      setMealCalories(totalCalories);
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des calories pour ${mealType}:`, error);
+    }
+  };
+
+  // Récupérer les calories pour tous les repas
   useEffect(() => {
-    const fetchBreakfastCalories = async () => {
-      try {
-        const db = getFirestore();
-        const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // Remplacez par l'ID utilisateur connecté
-        const q = query(
-          collection(db, "aliments"),
-          where("utilisateurId", "==", userId),
-          where("Repas", "==", "Petit-déjeuner") // Filtrer par type de repas
-        );
-
-        const querySnapshot = await getDocs(q);
-        let totalCalories = 0;
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          totalCalories += parseInt(data.calories || 0); // Ajouter les calories
-        });
-
-        setBreakfastCalories(totalCalories); // Mettre à jour l'état avec les calories totales
-      } catch (error) {
-        console.error("Erreur lors de la récupération des calories :", error);
-      }
-    };
-
-    fetchBreakfastCalories();
+    fetchMealCalories("Petit-déjeuner", setBreakfastCalories);
+    fetchMealCalories("Déjeuner", setLunchCalories);
+    fetchMealCalories("Dîner", setDinnerCalories);
+    fetchMealCalories("Collation", setSnackCalories);
   }, []);
 
   const handleAddGlass = () => {
@@ -106,6 +118,19 @@ const NutritionScreen = () => {
 
   const handleRemoveGlass = () => {
     if (waterGlasses > 0) setWaterGlasses(waterGlasses - 1);
+  };
+  
+  const navigateToAddMeal = (mealType: string) => {
+    if (mealType === "Déjeuner") {
+      router.push("/AddMidi");
+    } else if (mealType === "Dîner") {
+      router.push("/AddSoir");
+    } else {
+      router.push({
+        pathname: "/Add",
+        params: { mealType }
+      });
+    }
   };
 
   return (
@@ -139,12 +164,6 @@ const NutritionScreen = () => {
               <Text style={styles.streakText}>{streak}</Text>
             </View>
           )}
-        </View>
-
-        {/* Rectangle pour le Petit-déjeuner */}
-        <View style={styles.breakfastContainer}>
-          <Text style={styles.breakfastTitle}>Petit-déjeuner</Text>
-          <Text style={styles.breakfastCalories}>{breakfastCalories} kcal</Text>
         </View>
 
         <View style={[styles.section, styles.circlesContainer]}>
@@ -184,6 +203,79 @@ const NutritionScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        <View style={styles.mealsSection}>
+          <View style={styles.mealHeader}>
+            <Text style={styles.mealsSectionTitle}>Repas</Text>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => router.push("/Add")}
+            >
+              <Ionicons name="add-circle" size={30} color="#FF6A88" />
+            </TouchableOpacity>
+          </View>
+          
+          {/* Petit-déjeuner */}
+          <TouchableOpacity 
+            style={[styles.mealContainer, styles.breakfastContainer]}
+            onPress={() => navigateToAddMeal("Petit-déjeuner")}
+          >
+            <View style={styles.mealIconContainer}>
+              <Ionicons name="sunny-outline" size={30} color="#fff" />
+            </View>
+            <View style={styles.mealContent}>
+              <Text style={styles.mealTitle}>Petit-déjeuner</Text>
+              <Text style={styles.mealCalories}>{breakfastCalories} kcal</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Déjeuner */}
+          <TouchableOpacity 
+            style={[styles.mealContainer, styles.lunchContainer]}
+            onPress={() => navigateToAddMeal("Déjeuner")}
+          >
+            <View style={styles.mealIconContainer}>
+              <Ionicons name="restaurant-outline" size={30} color="#fff" />
+            </View>
+            <View style={styles.mealContent}>
+              <Text style={styles.mealTitle}>Déjeuner</Text>
+              <Text style={styles.mealCalories}>{lunchCalories} kcal</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Dîner */}
+          <TouchableOpacity 
+            style={[styles.mealContainer, styles.dinnerContainer]}
+            onPress={() => navigateToAddMeal("Dîner")}
+          >
+            <View style={styles.mealIconContainer}>
+              <Ionicons name="moon-outline" size={30} color="#fff" />
+            </View>
+            <View style={styles.mealContent}>
+              <Text style={styles.mealTitle}>Dîner</Text>
+              <Text style={styles.mealCalories}>{dinnerCalories} kcal</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Collation */}
+          <TouchableOpacity 
+            style={[styles.mealContainer, styles.snackContainer]}
+            onPress={() => navigateToAddMeal("Collation")}
+          >
+            <View style={styles.mealIconContainer}>
+              <Ionicons name="ice-cream-outline" size={30} color="#fff" />
+            </View>
+            <View style={styles.mealContent}>
+              <Text style={styles.mealTitle}>Collation</Text>
+              <Text style={styles.mealCalories}>{snackCalories} kcal</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -197,26 +289,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 30,
   },
-  breakfastContainer: {
-    backgroundColor: "#FF6A88",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 20,
-  },
   section: {
     marginVertical: 20,
-  },
-  breakfastTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 5,
-  },
-  breakfastCalories: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
   },
   dayNavigationBar: {
     flexDirection: "row",
@@ -294,6 +368,65 @@ const styles = StyleSheet.create({
   },
   waterButton: {
     marginHorizontal: 10,
+  },
+  mealsSection: {
+    padding: 16,
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  mealsSectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  addButton: {
+    padding: 5,
+  },
+  mealContainer: {
+    padding: 20,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mealIconContainer: {
+    marginRight: 15,
+  },
+  mealContent: {
+    flex: 1,
+  },
+  mealTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 5,
+  },
+  mealCalories: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  breakfastContainer: {
+    backgroundColor: "#FF6A88",
+  },
+  lunchContainer: {
+    backgroundColor: "#4FC3F7",
+  },
+  dinnerContainer: {
+    backgroundColor: "#673AB7",
+  },
+  snackContainer: {
+    backgroundColor: "#8BC34A",
   },
 });
 
