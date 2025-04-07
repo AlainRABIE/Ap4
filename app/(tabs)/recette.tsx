@@ -1,24 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
+import PremiumOverlay from "../../components/PremiumOverlay";
 
 const RecettePage = () => {
   const [recipes, setRecipes] = useState<{ idMeal: string; strMeal: string; strCategory: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [ingredients, setIngredients] = useState('');
+  const [showPremiumOverlay, setShowPremiumOverlay] = useState(false);
 
-  const searchRecipes = () => {
+  // Fonction de traduction
+  const translateText = async (text: string, targetLang: string) => {
+    try {
+      const sourceLang = targetLang === 'en' ? 'fr' : 'en';
+      const response = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
+      );
+      const data = await response.json();
+      return data.responseData.translatedText;
+    } catch (error) {
+      console.error('Erreur de traduction:', error);
+      return text;
+    }
+  };
+
+  useEffect(() => {
+    // Simuler la vérification d'abonnement - à remplacer par votre logique réelle
+    const hasPremiumAccess = false; // Intégrer votre logique de vérification ici
+    if (!hasPremiumAccess) {
+      setShowPremiumOverlay(true);
+    }
+  }, []);
+
+  const searchRecipes = async () => {
+    if (showPremiumOverlay) return; // Empêcher la recherche si l'overlay est visible
+
     setLoading(true);
-    // L'API TheMealDB permet de chercher par ingrédient principal
-    fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredients}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setRecipes(data.meals || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Erreur lors de la récupération des recettes:', error);
-        setLoading(false);
-      });
+    try {
+      // Traduire l'ingrédient en anglais
+      const ingredientEnglish = await translateText(ingredients, 'en');
+      
+      // Rechercher les recettes
+      const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredientEnglish}`);
+      const data = await response.json();
+      
+      if (data.meals) {
+        const translatedRecipes = await Promise.all(
+          data.meals.map(async (recipe: any) => ({
+            ...recipe,
+            strMeal: await translateText(recipe.strMeal, 'fr'),
+          }))
+        );
+        setRecipes(translatedRecipes);
+      } else {
+        setRecipes([]);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      setRecipes([]);
+    }
+    setLoading(false);
   };
 
   return (
@@ -30,7 +70,7 @@ const RecettePage = () => {
           style={styles.input}
           value={ingredients}
           onChangeText={setIngredients}
-          placeholder="Entrez un ingrédient (en anglais)"
+          placeholder="Entrez un ingrédient (en français)"
         />
         <TouchableOpacity style={styles.searchButton} onPress={searchRecipes}>
           <Text style={styles.buttonText}>Rechercher</Text>
@@ -54,6 +94,11 @@ const RecettePage = () => {
           )}
         />
       )}
+
+      <PremiumOverlay 
+        isVisible={showPremiumOverlay} 
+        onClose={() => setShowPremiumOverlay(false)}
+      />
     </View>
   );
 };

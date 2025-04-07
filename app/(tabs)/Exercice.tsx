@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Animated, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router"; // Importer le hook de navigation
+import PremiumOverlay from "../../components/PremiumOverlay";
 
 const exercises = [
   { id: "1", name: "Abdos", image: require("../../img/abdo.png"), route: "/(exo)/abdoexo" },
-  { id: "2", name: "Dorsaux", image: require("../../img/dos.png"), route: "/(exo)/abdoexo" }, // Pas encore défini
-  { id: "3", name: "Biceps", image: require("../../img/biceps.png"), route: "/(tabs)/biceps" }, // Pas encore défini
+  { id: "2", name: "Dorsaux", image: require("../../img/dos.png"), route: "/(exo)/abdoexo" }, 
+  { id: "3", name: "Biceps", image: require("../../img/biceps.png"), route: "/(tabs)/biceps" }, 
   { id: "4", name: "Jambe", image: require("../../img/jambe.png"), route: "/(tabs)/jambeexo" },
-  { id: "5", name: "Pectoraux", image: require("../../img/peck.png"), route: "/(tabs)peckexo" }, // Pas encore défini
+  { id: "5", name: "Pectoraux", image: require("../../img/peck.png"), route: "/(tabs)peckexo" }, 
 ];
 
 const subscriptions = [
@@ -20,9 +21,24 @@ const subscriptions = [
 export default function ExercisesScreen() {
   const router = useRouter(); // Initialiser le hook de navigation
   const [showSubscriptions, setShowSubscriptions] = useState(false); // État pour afficher ou masquer les abonnements
+  const [showPremiumOverlay, setShowPremiumOverlay] = useState(false);
+
+  useEffect(() => {
+    // Simuler la vérification d'abonnement - à remplacer par votre logique réelle
+    const hasPremiumAccess = false; // Intégrer votre logique de vérification ici
+    if (!hasPremiumAccess) {
+      setShowPremiumOverlay(true);
+    }
+  }, []);
 
   const toggleSubscriptions = () => {
     setShowSubscriptions(!showSubscriptions);
+  };
+
+  const handleExercisePress = (item: any) => {
+    if (item.route) {
+      router.push(item.route);
+    }
   };
 
   return (
@@ -45,18 +61,18 @@ export default function ExercisesScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
-            onPress={() => {
-              if (item.route) {
-              } else {
-                alert("Cette section n'est pas encore disponible.");
-              }
-            }}
+            onPress={() => handleExercisePress(item)}
           >
             <Image source={item.image} style={styles.icon} />
             <Text style={styles.itemText}>{item.name}</Text>
             <Ionicons name="chevron-forward" size={24} color="#999" />
           </TouchableOpacity>
         )}
+      />
+
+      <PremiumOverlay 
+        isVisible={showPremiumOverlay} 
+        onClose={() => setShowPremiumOverlay(false)}
       />
 
       {/* Modal pour les abonnements */}
