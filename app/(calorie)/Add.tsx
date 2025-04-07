@@ -28,13 +28,16 @@ export default function AddMeal() {
 
     try {
       const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // Remplacez par l'ID utilisateur connecté
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+
       const newMeal = {
         nom: mealName,
         calories: parseInt(calories),
         Repas: "Petit-déjeuner", // Ajouter automatiquement "Petit-déjeuner"
         urlPhoto: photo || "", // Ajouter l'URL de la photo si elle existe
         utilisateurId: userId,
-        date: new Date().toISOString(),
+        date: currentDate.toISOString(), // Format ISO string
       };
 
       await addDoc(collection(db, "aliments"), newMeal); // Ajouter dans Firebase

@@ -77,13 +77,27 @@ const NutritionScreen = () => {
     };
 
     fetchCalories();
-  }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories]);
+  }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories, currentDay]);
 
-  // Fonction pour récupérer les calories par type de repas
-  const fetchMealCalories = async (mealType: unknown, setMealCalories: { (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (arg0: number): void; }) => {
+  const formatDate = (date: Date) => {
+    try {
+      const d = new Date(date);
+      return d.toISOString(); // Format complet pour correspondre à new Date().toISOString()
+    } catch (error) {
+      console.error('Erreur format date:', error);
+      return '';
+    }
+  };
+
+  const fetchMealCalories = async (mealType: unknown, setMealCalories: { (value: React.SetStateAction<number>): void }) => {
     try {
       const db = getFirestore();
-      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2"; // ID utilisateur
+      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2";
+      
+      const startOfDay = new Date(currentDay);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      // Requête simplifiée en attendant la création de l'index
       const q = query(
         collection(db, "aliments"),
         where("utilisateurId", "==", userId),
@@ -93,14 +107,46 @@ const NutritionScreen = () => {
       const querySnapshot = await getDocs(q);
       let totalCalories = 0;
 
+      // Filtrage manuel des dates
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        totalCalories += parseInt(data.calories || 0);
+        const mealDate = new Date(data.date);
+        if (mealDate.toDateString() === startOfDay.toDateString()) {
+          totalCalories += parseInt(data.calories || 0);
+        }
       });
 
+      console.log(`Total calories pour ${mealType}:`, totalCalories);
       setMealCalories(totalCalories);
     } catch (error) {
-      console.error(`Erreur lors de la récupération des calories pour ${mealType}:`, error);
+      console.error(`Erreur récupération calories pour ${mealType}:`, error);
+    }
+  };
+
+  const handleDateChange = async (newDate: Date) => {
+    try {
+      // S'assurer que la date est correctement initialisée
+      const date = new Date(newDate);
+      date.setHours(0, 0, 0, 0);
+      console.log('Nouvelle date sélectionnée:', formatDate(date));
+      
+      setCurrentDay(date);
+      
+      // Réinitialiser les calories
+      setBreakfastCalories(0);
+      setLunchCalories(0);
+      setDinnerCalories(0);
+      setSnackCalories(0);
+
+      // Récupérer immédiatement les nouvelles données
+      await Promise.all([
+        fetchMealCalories("Petit-déjeuner", setBreakfastCalories),
+        fetchMealCalories("Déjeuner", setLunchCalories),
+        fetchMealCalories("Dîner", setDinnerCalories),
+        fetchMealCalories("Collation", setSnackCalories)
+      ]);
+    } catch (error) {
+      console.error('Erreur lors du changement de date:', error);
     }
   };
 
@@ -110,7 +156,7 @@ const NutritionScreen = () => {
     fetchMealCalories("Déjeuner", setLunchCalories);
     fetchMealCalories("Dîner", setDinnerCalories);
     fetchMealCalories("Collation", setSnackCalories);
-  }, []);
+  }, [currentDay]);
 
   const handleAddGlass = () => {
     if (waterGlasses < 8) setWaterGlasses(waterGlasses + 1);
@@ -141,9 +187,11 @@ const NutritionScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.dayNavigationBar}>
           <TouchableOpacity
-            onPress={() =>
-              setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)))
-            }
+            onPress={() => {
+              const newDate = new Date(currentDay);
+              newDate.setDate(currentDay.getDate() - 1);
+              handleDateChange(newDate);
+            }}
           >
             <Ionicons name="chevron-back-outline" size={28} color="#4FC3F7" />
           </TouchableOpacity>
@@ -155,9 +203,11 @@ const NutritionScreen = () => {
             })}
           </Text>
           <TouchableOpacity
-            onPress={() =>
-              setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)))
-            }
+            onPress={() => {
+              const newDate = new Date(currentDay);
+              newDate.setDate(currentDay.getDate() + 1);
+              handleDateChange(newDate);
+            }}
           >
             <Ionicons name="chevron-forward-outline" size={28} color="#4FC3F7" />
           </TouchableOpacity>
