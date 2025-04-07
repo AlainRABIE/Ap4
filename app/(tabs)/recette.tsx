@@ -1,46 +1,59 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
 
 const RecettePage = () => {
   const [recipes, setRecipes] = useState<{ idMeal: string; strMeal: string; strCategory: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ingredients, setIngredients] = useState('');
 
-  useEffect(() => {
-    // Remplacez l'URL par celle de votre API de recettes
-    fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=')
+  const searchRecipes = () => {
+    setLoading(true);
+    // L'API TheMealDB permet de chercher par ingrédient principal
+    fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredients}`)
       .then((response) => response.json())
       .then((data) => {
-        setRecipes(data.meals || []); // Si aucune recette n'est trouvée, on retourne un tableau vide
+        setRecipes(data.meals || []);
         setLoading(false);
       })
       .catch((error) => {
         console.error('Erreur lors de la récupération des recettes:', error);
         setLoading(false);
       });
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Chargement des recettes...</Text>
-      </View>
-    );
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Liste des Recettes</Text>
-      <FlatList
-        data={recipes}
-        keyExtractor={(item) => item.idMeal}
-        renderItem={({ item }) => (
-          <View style={styles.recipeItem}>
-            <Text style={styles.recipeTitle}>{item.strMeal}</Text>
-            <Text style={styles.recipeCategory}>Catégorie: {item.strCategory}</Text>
-          </View>
-        )}
-      />
+      <Text style={styles.title}>Recherche de Recettes</Text>
+      
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.input}
+          value={ingredients}
+          onChangeText={setIngredients}
+          placeholder="Entrez un ingrédient (en anglais)"
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={searchRecipes}>
+          <Text style={styles.buttonText}>Rechercher</Text>
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text>Chargement des recettes...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={recipes}
+          keyExtractor={(item) => item.idMeal}
+          renderItem={({ item }) => (
+            <View style={styles.recipeItem}>
+              <Text style={styles.recipeTitle}>{item.strMeal}</Text>
+              {item.strCategory && <Text style={styles.recipeCategory}>Catégorie: {item.strCategory}</Text>}
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -75,6 +88,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  searchContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    padding: 8,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    marginRight: 8,
+  },
+  searchButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });
 
 export default RecettePage;
