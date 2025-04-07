@@ -7,6 +7,15 @@ interface User {
   email: string;
   nomComplet?: string;
   departement?: string;
+  poids?: number;
+  age?: number;
+  taille?: number;
+  sexe?: string;
+  niveauActivite?: string;
+  caloriesNecessaires?: number;
+  role?: string;
+  abonnement?: string;
+  urlAvatar?: string;
 }
 
 interface UserContextType {
@@ -35,8 +44,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",
-              nomComplet: userData.nomComplet || "Non renseigné",
-              departement: userData.departement || "Non renseigné",
+              ...userData // Cela va inclure tous les champs de Firestore
             });
           } else {
             // Si l'utilisateur n'existe pas dans Firestore, utilisez les données de Firebase Auth
