@@ -1,17 +1,22 @@
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet } from "react-native";
-import { UserProvider } from "../services/UserContext"; 
+import { UserProvider } from "../services/UserContext";
 
 export default function RootLayout() {
   return (
-    <UserProvider> 
+    <UserProvider>
       <SafeAreaView style={styles.container}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="(modals)/AddSoir" 
+            options={{
+              presentation: 'modal',
+              headerShown: false
+            }} 
+          />
+        </Stack>
       </SafeAreaView>
     </UserProvider>
   );

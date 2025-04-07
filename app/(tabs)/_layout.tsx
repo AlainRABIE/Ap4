@@ -13,14 +13,14 @@ function TabBarIcon({ name, color, size }: { name: keyof typeof Ionicons.glyphMa
 
 function MyTabs() {
   const screenOptions = {
-    headerShown: false, // Désactiver complètement l'en-tête pour tous les écrans
+    headerShown: false,
     tabBarStyle: {
       position: "absolute" as const,
       left: 24,
       right: 24,
       bottom: 16,
       elevation: 0,
-      backgroundColor: "transparent",
+      backgroundColor: "#FFFFFF",
       borderTopWidth: 0,
       borderRadius: 30,
     },
@@ -31,7 +31,7 @@ function MyTabs() {
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: "Accueil",
           tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,

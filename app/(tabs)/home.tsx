@@ -123,14 +123,14 @@ const NutritionScreen = () => {
   const navigateToAddMeal = (mealType: string) => {
     switch (mealType) {
       case "Déjeuner":
-        router.push("/(tabs)/AddMidi");
+        router.push("/(calorie)/AddMidi");
         break;
       case "Dîner":
-        router.push("/(tabs)/AddSoir");
+        router.push("/(calorie)/AddSoir");
         break;
       default:
         router.push({
-          pathname: "/(tabs)/Add",
+          pathname: "/(calorie)/Add",
           params: { mealType }
         });
     }
