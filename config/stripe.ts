@@ -1,0 +1,3 @@
+export const STRIPE_PUBLISHABLE_KEY = "pk_live_51RBX9LGyCQ3V8jly1WJhmKfzlSnx57jUTiAwQLjaTh3LP0HXyeNqNxYlEr7bTWsnYP4XiGAsRX3FfY3QXmLU4aTY005h9FV3QP";
+// N'utilisez jamais cette clé secrète dans le code côté client - ici uniquement comme référence
+export const STRIPE_SECRET_KEY = "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";

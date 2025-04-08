@@ -294,15 +294,6 @@ const NutritionScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.section, styles.stepCounter]}>
-          <Text style={styles.stepTitle}>Podomètre</Text>
-          <View style={styles.stepContent}>
-            <Ionicons name="footsteps" size={40} color="#4FC3F7" />
-            <Text style={styles.stepCount}>{steps}</Text>
-            <Text style={styles.stepLabel}>pas aujourd'hui</Text>
-          </View>
-        </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -454,37 +445,6 @@ const styles = StyleSheet.create({
   },
   snackContainer: {
     backgroundColor: "#8BC34A",
-  },
-  stepCounter: {
-    padding: 16,
-    marginTop: 10,
-  },
-  stepTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
-  },
-  stepContent: {
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  stepCount: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#4FC3F7",
-    marginVertical: 10,
-  },
-  stepLabel: {
-    fontSize: 16,
-    color: "#666",
   },
 });
 

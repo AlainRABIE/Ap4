@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
 
 interface PremiumOverlayProps {
   isVisible: boolean;
@@ -7,6 +8,13 @@ interface PremiumOverlayProps {
 }
 
 const PremiumOverlay: React.FC<PremiumOverlayProps> = ({ isVisible, onClose }) => {
+  const router = useRouter();
+
+  const goToCheckout = () => {
+    onClose(); // On ferme l'overlay
+    router.push('/Abo'); // On redirige vers la page d'abonnement
+  };
+
   return (
     <Modal visible={isVisible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -16,8 +24,8 @@ const PremiumOverlay: React.FC<PremiumOverlayProps> = ({ isVisible, onClose }) =
             Cette fonctionnalité est réservée aux membres Premium.
             Abonnez-vous pour y accéder !
           </Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>Fermer</Text>
+          <TouchableOpacity style={styles.button} onPress={goToCheckout}>
+            <Text style={styles.buttonText}>S'abonner</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -28,15 +36,15 @@ const PremiumOverlay: React.FC<PremiumOverlayProps> = ({ isVisible, onClose }) =
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#000000', // Fond complètement noir au lieu de semi-transparent
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute', // Position absolue pour couvrir toute la page
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 1000, // S'assurer que l'overlay est au-dessus de tout
+    zIndex: 1000,
   },
   content: {
     backgroundColor: 'white',
@@ -44,8 +52,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: '80%',
     alignItems: 'center',
-    elevation: 5, // Pour Android
-    shadowColor: '#000', // Pour iOS
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
