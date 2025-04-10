@@ -34,12 +34,11 @@ export default function PaymentScreen() {
         throw new Error('Utilisateur non connecté');
       }
 
-      // Make sure to use the planName from the params which contains the selected subscription plan
       console.log(`Mise à jour de l'abonnement vers: ${planName}`);
       
       const userRef = doc(db, 'utilisateurs', user.uid);
       await updateDoc(userRef, {
-        abonnement: planName, // This will update the user's subscription to the selected plan
+        abonnement: planName, 
         derniereModification: serverTimestamp(),
         dateModification: serverTimestamp()
       });

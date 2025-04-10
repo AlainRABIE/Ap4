@@ -5,11 +5,11 @@ import { useRouter } from "expo-router"; // Importer le hook de navigation
 import PremiumOverlay from "../../components/PremiumOverlay";
 
 const exercises = [
-  { id: "1", name: "Abdos", image: require("../../img/abdo.png"), route: "/(exo)/abdoexo" },
-  { id: "2", name: "Dorsaux", image: require("../../img/dos.png"), route: "/(exo)/abdoexo" }, 
-  { id: "3", name: "Biceps", image: require("../../img/biceps.png"), route: "/(tabs)/biceps" }, 
-  { id: "4", name: "Jambe", image: require("../../img/jambe.png"), route: "/(tabs)/jambeexo" },
-  { id: "5", name: "Pectoraux", image: require("../../img/peck.png"), route: "/(tabs)peckexo" }, 
+  { id: "1", name: "Abdos", image: require("../../assets/images/abdo.png"), route: "/(exo)/abdoexo" },
+  { id: "2", name: "Dorsaux", image: require("../../assets/images/dos.png"), route: "/(exo)/abdoexo" }, 
+  { id: "3", name: "Biceps", image: require("../../assets/images/biceps.png"), route: "/(tabs)/biceps" }, 
+  { id: "4", name: "Jambe", image: require("../../assets/images/jambe.png"), route: "/(tabs)/jambeexo" },
+  { id: "5", name: "Pectoraux", image: require("../../assets/images/peck.png"), route: "/(tabs)peckexo" }, 
 ];
 
 const subscriptions = [
