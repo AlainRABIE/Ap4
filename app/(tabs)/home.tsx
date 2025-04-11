@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,13 +6,34 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  StatusBar,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Pedometer } from "expo-sensors";
 import { useRouter } from "expo-router";
 import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { useFocusEffect } from '@react-navigation/native';
+
+// Palette de couleurs néomorphique
+const COLORS = {
+  background: '#ECEFF1',  // Fond gris très clair
+  cardBackground: '#ECEFF1',
+  shadowDark: '#C7CCD1',  // Ombre foncée
+  shadowLight: '#FFFFFF', // Ombre claire
+  textPrimary: '#37474F',
+  textSecondary: '#78909C',
+  accent: '#FF5722',      // Orange
+  blue: '#03A9F4',        // Bleu
+  green: '#4CAF50',       // Vert
+  pink: '#E91E63',        // Rose
+  purple: '#673AB7',      // Violet
+};
+
+const { width } = Dimensions.get("window");
+const cardWidth = width - 40;
 
 const NutritionScreen = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
@@ -20,6 +41,7 @@ const NutritionScreen = () => {
   const [waterGlasses, setWaterGlasses] = useState(0);
   const [steps, setSteps] = useState(0);
   const [isPedometerAvailable, setIsPedometerAvailable] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // États pour les calories
   const [caloriesTotales, setCaloriesTotales] = useState(0);
@@ -34,23 +56,103 @@ const NutritionScreen = () => {
 
   const router = useRouter();
 
+  // Mise à jour du podomètre pour récupérer les pas depuis le début de la journée
   useEffect(() => {
     const startPedometer = async () => {
-      const available = await Pedometer.isAvailableAsync();
-      setIsPedometerAvailable(available);
+      try {
+        // Vérifier si le podomètre est disponible
+        const available = await Pedometer.isAvailableAsync();
+        setIsPedometerAvailable(available);
 
-      if (available) {
-        const subscription = Pedometer.watchStepCount((result) => {
-          setSteps(result.steps);
-        });
+        if (available) {
+          // Créer des dates pour aujourd'hui (début de journée jusqu'à maintenant)
+          const end = new Date();
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
 
-        return () => subscription && subscription.remove();
+          try {
+            // Récupérer le nombre de pas pour aujourd'hui
+            const pastStepData = await Pedometer.getStepCountAsync(start, end);
+            if (pastStepData) {
+              setSteps(pastStepData.steps);
+            }
+
+            // Configurer le suivi continu des nouveaux pas
+            const subscription = Pedometer.watchStepCount(result => {
+              // Ajouter les nouveaux pas au total déjà compté
+              setSteps(currentSteps => currentSteps + result.steps);
+            });
+
+            return () => {
+              if (subscription) {
+                subscription.remove();
+              }
+            };
+          } catch (err) {
+            console.error("Erreur lors de l'accès au podomètre:", err);
+            // Gérer l'erreur de permission ou d'accès aux données du podomètre
+          }
+        } else {
+          console.log("Le podomètre n'est pas disponible sur cet appareil");
+        }
+      } catch (error) {
+        console.error("Erreur d'initialisation du podomètre:", error);
       }
     };
 
     startPedometer();
   }, []);
 
+  // Récupérer les calories pour tous les repas
+  const fetchAllMealData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchMealCalories("Petit-déjeuner", setBreakfastCalories),
+        fetchMealCalories("Déjeuner", setLunchCalories),
+        fetchMealCalories("Dîner", setDinnerCalories),
+        fetchMealCalories("Collation", setSnackCalories),
+      ]);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des repas:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fonction pour récupérer les données du podomètre
+  const fetchPedometerData = useCallback(async () => {
+    try {
+      if (isPedometerAvailable) {
+        const end = new Date();
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+      
+        const pastStepData = await Pedometer.getStepCountAsync(start, end);
+        if (pastStepData) {
+          setSteps(pastStepData.steps);
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des pas:", error);
+    }
+  }, [isPedometerAvailable]);
+
+  // Actualiser les données à chaque fois que l'écran est affiché
+  useFocusEffect(
+    useCallback(() => {
+      const refreshData = async () => {
+        await Promise.all([
+          fetchPedometerData(),
+          fetchAllMealData()
+        ]);
+      };
+
+      refreshData();
+    }, [fetchPedometerData, fetchAllMealData])
+  );
+
+  // Calcul des calories totales, restantes et brûlées
   useEffect(() => {
     const fetchCalories = async () => {
       try {
@@ -74,7 +176,9 @@ const NutritionScreen = () => {
 
           setCaloriesTotales(caloriesNecessaires);
           setCaloriesRestantes(caloriesNecessaires - totalConsumed);
-          const caloriesBruleesParPas = 0.04; // Estimation moyenne des calories brûlées par pas
+          
+          // Estimation plus précise des calories brûlées par pas
+          const caloriesBruleesParPas = 0.05;
           const caloriesBrulees = Math.round(steps * caloriesBruleesParPas);
           setCaloriesBrulees(caloriesBrulees);
         }
@@ -86,15 +190,12 @@ const NutritionScreen = () => {
     fetchCalories();
   }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories]);
 
-  const fetchMealCalories = async (mealType: unknown, setMealCalories: (arg0: number) => void) => {
+  const fetchMealCalories = async (mealType: unknown, setMealCalories: { (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (arg0: number): void; }) => {
     try {
       const auth = getAuth();
       const currentUser = auth.currentUser;
 
-      if (!currentUser) {
-        console.error("Aucun utilisateur connecté");
-        return;
-      }
+      if (!currentUser) return;
 
       const db = getFirestore();
       const q = query(
@@ -113,17 +214,9 @@ const NutritionScreen = () => {
 
       setMealCalories(totalCalories);
     } catch (error) {
-      console.error(`Erreur lors de la récupération des calories pour ${mealType}:`, error);
+      console.error(`Erreur pour ${mealType}:`, error);
     }
   };
-
-  // Récupérer les calories pour tous les repas
-  useEffect(() => {
-    fetchMealCalories("Petit-déjeuner", setBreakfastCalories);
-    fetchMealCalories("Déjeuner", setLunchCalories);
-    fetchMealCalories("Dîner", setDinnerCalories);
-    fetchMealCalories("Collation", setSnackCalories);
-  }, []);
 
   const handleAddGlass = () => {
     if (waterGlasses < 8) setWaterGlasses(waterGlasses + 1);
@@ -149,149 +242,358 @@ const NutritionScreen = () => {
     }
   };
 
+  // Calcul du pourcentage pour les progress bars
+  const calculateProgressPercentage = (consumed: number, total: number) => {
+    if (total <= 0) return 0;
+    const percentage = (consumed / total) * 100;
+    return Math.min(percentage, 100); // Cap at 100%
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.accent} />
+        <Text style={styles.loadingText}>Chargement des données...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.dayNavigationBar}>
-          <TouchableOpacity
-            onPress={() =>
-              setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)))
-            }
-          >
-            <Ionicons name="chevron-back-outline" size={28} color="#4FC3F7" />
-          </TouchableOpacity>
-          <Text style={styles.dayNavigationText}>
-            {currentDay.toLocaleDateString("fr-FR", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </Text>
-          <TouchableOpacity
-            onPress={() =>
-              setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)))
-            }
-          >
-            <Ionicons name="chevron-forward-outline" size={28} color="#4FC3F7" />
-          </TouchableOpacity>
-          {streak > 0 && (
-            <View style={styles.streakContainer}>
-              <Ionicons name="flame" size={24} color="#FF6A88" />
-              <Text style={styles.streakText}>{streak}</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* En-tête avec date et streak */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Nutrition</Text>
+          
+          <View style={styles.dateNavigationContainer}>
+            <TouchableOpacity
+              onPress={() => setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)))}
+              style={styles.navButton}
+            >
+              <Ionicons name="chevron-back-outline" size={20} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+            
+            <View style={styles.dateContainer}>
+              <Text style={styles.dateText}>{formatDate(currentDay)}</Text>
+              {streak > 0 && (
+                <View style={styles.streakContainer}>
+                  <Ionicons name="flame" size={16} color={COLORS.accent} />
+                  <Text style={styles.streakText}>{streak} jours</Text>
+                </View>
+              )}
             </View>
-          )}
+            
+            <TouchableOpacity
+              onPress={() => setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)))}
+              style={styles.navButton}
+            >
+              <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={[styles.section, styles.circlesContainer]}>
-          <LinearGradient colors={["#FF9A8B", "#FF6A88"]} style={styles.circleProgress}>
-            <Text style={styles.circleBigNumber}>{caloriesTotales}</Text>
-            <Text style={styles.circleLabel}>Calories</Text>
-          </LinearGradient>
-          <LinearGradient colors={["#A18CD1", "#FBC2EB"]} style={styles.circleProgress}>
-            <Text style={styles.circleBigNumber}>{caloriesRestantes}</Text>
-            <Text style={styles.circleLabel}>Restantes</Text>
-          </LinearGradient>
-          <LinearGradient colors={["#84FAB0", "#8FD3F4"]} style={styles.circleProgress}>
-            <Text style={styles.circleBigNumber}>{caloriesBrulees}</Text>
-            <Text style={styles.circleLabel}>Brûlées</Text>
-          </LinearGradient>
+        {/* Carte des statistiques */}
+        <View style={styles.statsSection}>
+          {/* Objectif */}
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="flame-outline" size={24} color={COLORS.accent} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{caloriesTotales}</Text>
+              <Text style={styles.statLabel}>Objectif kcal</Text>
+            </View>
+          </View>
+          
+          {/* Restantes */}
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="restaurant-outline" size={24} color={COLORS.blue} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{caloriesRestantes}</Text>
+              <Text style={styles.statLabel}>Restantes kcal</Text>
+            </View>
+          </View>
+          
+          {/* Brûlées */}
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="fitness-outline" size={24} color={COLORS.green} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{caloriesBrulees}</Text>
+              <Text style={styles.statLabel}>Brûlées kcal</Text>
+            </View>
+          </View>
         </View>
 
-        <View style={[styles.section, styles.waterContainer]}>
-          <Text style={styles.waterTitle}>Verres d'eau</Text>
-          <View style={styles.waterGlasses}>
+        {/* Suivi de l'eau */}
+        <View style={styles.cardContainer}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardTitleContainer}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="water-outline" size={20} color={COLORS.blue} />
+              </View>
+              <Text style={styles.cardTitle}>Hydratation</Text>
+            </View>
+            <Text style={styles.waterCount}>{waterGlasses}/8</Text>
+          </View>
+          
+          <View style={styles.waterGlassesContainer}>
             {Array.from({ length: 8 }).map((_, index) => (
-              <Ionicons
-                key={index}
-                name={index < waterGlasses ? "water" : "water-outline"}
-                size={40}
-                color={index < waterGlasses ? "#4FC3F7" : "#B0BEC5"}
-                style={styles.waterGlassIcon}
-              />
+              <View key={index} style={styles.glassWrapper}>
+                <View style={[
+                  styles.glassIndicator, 
+                  index < waterGlasses ? styles.glassActive : styles.glassInactive
+                ]}>
+                  <Ionicons 
+                    name={index < waterGlasses ? "water" : "water-outline"} 
+                    size={20} 
+                    color={index < waterGlasses ? COLORS.blue : COLORS.textSecondary} 
+                  />
+                </View>
+              </View>
             ))}
           </View>
-          <View style={styles.waterButtons}>
-            <TouchableOpacity onPress={handleRemoveGlass} style={styles.waterButton}>
-              <Ionicons name="remove-circle-outline" size={40} color="#FF6A88" />
+          
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressTrack}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${(waterGlasses / 8) * 100}%` }
+                ]} 
+              />
+            </View>
+          </View>
+          
+          <View style={styles.waterButtonsContainer}>
+            <TouchableOpacity 
+              onPress={handleRemoveGlass} 
+              style={styles.circleButton}
+            >
+              <Ionicons name="remove" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleAddGlass} style={styles.waterButton}>
-              <Ionicons name="add-circle-outline" size={40} color="#4FC3F7" />
+            <TouchableOpacity 
+              onPress={handleAddGlass} 
+              style={styles.circleButton}
+            >
+              <Ionicons name="add" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.mealsSection}>
-          <View style={styles.mealHeader}>
-            <Text style={styles.mealsSectionTitle}>Repas</Text>
+        {/* Section des repas */}
+        <View style={styles.cardContainer}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardTitleContainer}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="restaurant-outline" size={20} color={COLORS.accent} />
+              </View>
+              <Text style={styles.cardTitle}>Repas d'aujourd'hui</Text>
+            </View>
             <TouchableOpacity 
-              style={styles.addButton}
+              style={styles.addMealButton}
               onPress={() => router.push("/Add")}
             >
-              <Ionicons name="add-circle" size={30} color="#FF6A88" />
+              <Ionicons name="add-outline" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
           
-          {/* Petit-déjeuner */}
-          <TouchableOpacity 
-            style={[styles.mealContainer, styles.breakfastContainer]}
-            onPress={() => navigateToAddMeal("Petit-déjeuner")}
-          >
-            <View style={styles.mealIconContainer}>
-              <Ionicons name="sunny-outline" size={30} color="#fff" />
-            </View>
-            <View style={styles.mealContent}>
-              <Text style={styles.mealTitle}>Petit-déjeuner</Text>
-              <Text style={styles.mealCalories}>{breakfastCalories} kcal</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          {/* Déjeuner */}
-          <TouchableOpacity 
-            style={[styles.mealContainer, styles.lunchContainer]}
-            onPress={() => navigateToAddMeal("Déjeuner")}
-          >
-            <View style={styles.mealIconContainer}>
-              <Ionicons name="restaurant-outline" size={30} color="#fff" />
-            </View>
-            <View style={styles.mealContent}>
-              <Text style={styles.mealTitle}>Déjeuner</Text>
-              <Text style={styles.mealCalories}>{lunchCalories} kcal</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          {/* Dîner */}
-          <TouchableOpacity 
-            style={[styles.mealContainer, styles.dinnerContainer]}
-            onPress={() => navigateToAddMeal("Dîner")}
-          >
-            <View style={styles.mealIconContainer}>
-              <Ionicons name="moon-outline" size={30} color="#fff" />
-            </View>
-            <View style={styles.mealContent}>
-              <Text style={styles.mealTitle}>Dîner</Text>
-              <Text style={styles.mealCalories}>{dinnerCalories} kcal</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          {/* Collation */}
-          <TouchableOpacity 
-            style={[styles.mealContainer, styles.snackContainer]}
-            onPress={() => navigateToAddMeal("Collation")}
-          >
-            <View style={styles.mealIconContainer}>
-              <Ionicons name="ice-cream-outline" size={30} color="#fff" />
-            </View>
-            <View style={styles.mealContent}>
-              <Text style={styles.mealTitle}>Collation</Text>
-              <Text style={styles.mealCalories}>{snackCalories} kcal</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.mealList}>
+            {/* Petit-déjeuner */}
+            <TouchableOpacity 
+              style={styles.mealRow}
+              onPress={() => navigateToAddMeal("Petit-déjeuner")}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.mealIconCircle, {backgroundColor: COLORS.pink}]}>
+                <Ionicons name="sunny" size={18} color="#FFF" />
+              </View>
+              
+              <View style={styles.mealDetails}>
+                <View style={styles.mealTitleRow}>
+                  <Text style={styles.mealTitle}>Petit-déjeuner</Text>
+                  <Text style={styles.mealCalories}>{breakfastCalories} kcal</Text>
+                </View>
+                
+                <View style={styles.mealProgressTrack}>
+                  <View 
+                    style={[
+                      styles.mealProgressFill, 
+                      { 
+                        width: `${calculateProgressPercentage(breakfastCalories, caloriesTotales * 0.25)}%`,
+                        backgroundColor: COLORS.pink
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.mealChevron}>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+              </View>
+            </TouchableOpacity>
+            
+            {/* Déjeuner */}
+            <TouchableOpacity 
+              style={styles.mealRow}
+              onPress={() => navigateToAddMeal("Déjeuner")}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.mealIconCircle, {backgroundColor: COLORS.accent}]}>
+                <Ionicons name="restaurant" size={18} color="#FFF" />
+              </View>
+              
+              <View style={styles.mealDetails}>
+                <View style={styles.mealTitleRow}>
+                  <Text style={styles.mealTitle}>Déjeuner</Text>
+                  <Text style={styles.mealCalories}>{lunchCalories} kcal</Text>
+                </View>
+                
+                <View style={styles.mealProgressTrack}>
+                  <View 
+                    style={[
+                      styles.mealProgressFill, 
+                      { 
+                        width: `${calculateProgressPercentage(lunchCalories, caloriesTotales * 0.40)}%`,
+                        backgroundColor: COLORS.accent
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.mealChevron}>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+              </View>
+            </TouchableOpacity>
+            
+            {/* Dîner */}
+            <TouchableOpacity 
+              style={styles.mealRow}
+              onPress={() => navigateToAddMeal("Dîner")}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.mealIconCircle, {backgroundColor: COLORS.purple}]}>
+                <Ionicons name="moon" size={18} color="#FFF" />
+              </View>
+              
+              <View style={styles.mealDetails}>
+                <View style={styles.mealTitleRow}>
+                  <Text style={styles.mealTitle}>Dîner</Text>
+                  <Text style={styles.mealCalories}>{dinnerCalories} kcal</Text>
+                </View>
+                
+                <View style={styles.mealProgressTrack}>
+                  <View 
+                    style={[
+                      styles.mealProgressFill, 
+                      { 
+                        width: `${calculateProgressPercentage(dinnerCalories, caloriesTotales * 0.25)}%`,
+                        backgroundColor: COLORS.purple
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.mealChevron}>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+              </View>
+            </TouchableOpacity>
+            
+            {/* Collation */}
+            <TouchableOpacity 
+              style={[styles.mealRow, {borderBottomWidth: 0}]}
+              onPress={() => navigateToAddMeal("Collation")}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.mealIconCircle, {backgroundColor: COLORS.green}]}>
+                <Ionicons name="ice-cream" size={18} color="#FFF" />
+              </View>
+              
+              <View style={styles.mealDetails}>
+                <View style={styles.mealTitleRow}>
+                  <Text style={styles.mealTitle}>Collation</Text>
+                  <Text style={styles.mealCalories}>{snackCalories} kcal</Text>
+                </View>
+                
+                <View style={styles.mealProgressTrack}>
+                  <View 
+                    style={[
+                      styles.mealProgressFill, 
+                      { 
+                        width: `${calculateProgressPercentage(snackCalories, caloriesTotales * 0.10)}%`,
+                        backgroundColor: COLORS.green
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.mealChevron}>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
+        
+        {/* Section activité physique */}
+        <View style={styles.cardContainer}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardTitleContainer}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="footsteps-outline" size={20} color={COLORS.green} />
+              </View>
+              <Text style={styles.cardTitle}>Activité physique</Text>
+            </View>
+          </View>
 
+          <View style={styles.activityCard}>
+            <View style={styles.stepsInfo}>
+              <Text style={styles.stepsCount}>{steps}</Text>
+              <Text style={styles.stepsLabel}>pas aujourd'hui</Text>
+              
+              <View style={styles.stepsProgressTrack}>
+                <View 
+                  style={[
+                    styles.stepsProgressFill, 
+                    { width: `${Math.min((steps / 10000) * 100, 100)}%` }
+                  ]} 
+                />
+              </View>
+              
+              <Text style={styles.stepsGoalText}>
+                {Math.floor((steps / 10000) * 100)}% de l'objectif (10 000 pas)
+              </Text>
+            </View>
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.caloriesBurned}>
+              <View style={styles.caloriesIconCircle}>
+                <Ionicons name="flame" size={22} color="#FFF" />
+              </View>
+              <Text style={styles.caloriesBurnedValue}>{caloriesBrulees}</Text>
+              <Text style={styles.caloriesBurnedLabel}>calories brûlées</Text>
+            </View>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -300,150 +602,365 @@ const NutritionScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: COLORS.textSecondary,
   },
   scrollContent: {
+    paddingHorizontal: 20,
     paddingBottom: 30,
   },
-  section: {
-    marginVertical: 20,
-  },
-  dayNavigationBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+  header: {
+    marginTop: 20,
     marginBottom: 20,
   },
-  dayNavigationText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 16,
   },
-  streakContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
+  dateNavigationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
-  streakText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#FF6A88",
-    marginLeft: 5,
-  },
-  circlesContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-  },
-  circleProgress: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
+  navButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.cardBackground,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: {
+      width: 3,
+      height: 3,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
     elevation: 5,
   },
-  circleBigNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
+  dateContainer: {
+    alignItems: 'center',
   },
-  circleLabel: {
+  dateText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    textTransform: 'capitalize',
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  streakText: {
     fontSize: 14,
-    color: "#fff",
+    fontWeight: "500",
+    color: COLORS.accent,
+    marginLeft: 5,
   },
-  waterContainer: {
-    paddingHorizontal: 16,
+  statsSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
   },
-  waterTitle: {
+  statCard: {
+    width: (cardWidth - 20) / 3,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: COLORS.cardBackground,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 6,
+      height: 6,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    backgroundColor: COLORS.background,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 3,
+      height: 3,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  statContent: {
+    alignItems: 'center',
+  },
+  statValue: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 4,
   },
-  waterGlasses: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
-  waterGlassIcon: {
-    marginHorizontal: 5,
+  cardContainer: {
+    width: cardWidth,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 6,
+      height: 6,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  waterButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  waterButton: {
-    marginHorizontal: 10,
+  cardTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  mealsSection: {
-    padding: 16,
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+    marginRight: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 2,
+      height: 2,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
-  mealHeader: {
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+  },
+  waterCount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.blue,
+  },
+  waterGlassesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  glassWrapper: {
+    alignItems: 'center',
+  },
+  glassIndicator: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  glassActive: {
+    backgroundColor: 'rgba(3, 169, 244, 0.15)',
+  },
+  glassInactive: {
+    backgroundColor: COLORS.background,
+  },
+  progressBarContainer: {
+    marginBottom: 20,
+  },
+  progressTrack: {
+    height: 8,
+    backgroundColor: COLORS.background,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: COLORS.blue,
+    borderRadius: 4,
+  },
+  waterButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+  },
+  circleButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.cardBackground,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 3,
+      height: 3,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  addMealButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 2,
+      height: 2,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 3.84,
+    elevation: 3,
+  },
+  mealList: {
+    backgroundColor: COLORS.background,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  mealRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  mealIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mealDetails: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  mealTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
-  },
-  mealsSectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  addButton: {
-    padding: 5,
-  },
-  mealContainer: {
-    padding: 20,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: "center",
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  mealIconContainer: {
-    marginRight: 15,
-  },
-  mealContent: {
-    flex: 1,
+    marginBottom: 8,
   },
   mealTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: "500",
+    color: COLORS.textPrimary,
   },
   mealCalories: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
   },
-  breakfastContainer: {
-    backgroundColor: "#FF6A88",
+  mealProgressTrack: {
+    height: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 3,
+    overflow: 'hidden',
   },
-  lunchContainer: {
-    backgroundColor: "#4FC3F7",
+  mealProgressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
-  dinnerContainer: {
-    backgroundColor: "#673AB7",
+  mealChevron: {
+    marginLeft: 10,
   },
-  snackContainer: {
-    backgroundColor: "#8BC34A",
+  activityCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: 16,
+    padding: 18,
   },
+  stepsInfo: {
+    marginBottom: 20,
+  },
+  stepsCount: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  stepsLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
+  },
+  stepsProgressTrack: {
+    height: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  stepsProgressFill: {
+    height: '100%',
+    backgroundColor: COLORS.green,
+    borderRadius: 4,
+  },
+  stepsGoalText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    marginVertical: 16,
+  },
+  caloriesBurned: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  caloriesIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  caloriesBurnedValue: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginRight: 6,
+  },
+  caloriesBurnedLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  }
 });
 
 export default NutritionScreen;
