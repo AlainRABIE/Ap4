@@ -70,7 +70,6 @@ const NutritionScreen = () => {
           const userData = userSnap.data();
           const caloriesNecessaires = userData.caloriesNecessaires || 0;
 
-          // Calcul des calories totales consommées
           const totalConsumed = breakfastCalories + lunchCalories + dinnerCalories + snackCalories;
 
           setCaloriesTotales(caloriesNecessaires);
@@ -87,7 +86,6 @@ const NutritionScreen = () => {
     fetchCalories();
   }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories]);
 
-  // Fonction pour récupérer les calories par type de repas
   const fetchMealCalories = async (mealType: unknown, setMealCalories: (arg0: number) => void) => {
     try {
       const auth = getAuth();
