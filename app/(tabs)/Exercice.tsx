@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Animated, Modal } from "react-native";
+import React, { useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router"; // Importer le hook de navigation
-import PremiumOverlay from "../../components/PremiumOverlay";
 
 const exercises = [
   { id: "1", name: "Abdos", image: require("../../assets/images/abdo.png"), route: "/(exo)/abdoexo" },
   { id: "2", name: "Dorsaux", image: require("../../assets/images/dos.png"), route: "/(exo)/abdoexo" }, 
-  { id: "3", name: "Biceps", image: require("../../assets/images/biceps.png"), route: "/(tabs)/biceps" }, 
-  { id: "4", name: "Jambe", image: require("../../assets/images/jambe.png"), route: "/(tabs)/jambeexo" },
-  { id: "5", name: "Pectoraux", image: require("../../assets/images/peck.png"), route: "/(tabs)peckexo" }, 
+  { id: "3", name: "Biceps", image: require("../../assets/images/biceps.png"), route: "/(exo)/bicepsexo" }, 
+  { id: "4", name: "Jambe", image: require("../../assets/images/jambe.png"), route: "/(exo)/jambexo" },
+  { id: "5", name: "Pectoraux", image: require("../../assets/images/peck.png"), route: "/(exo)peckexo" }, 
 ];
 
 const subscriptions = [
@@ -21,15 +20,6 @@ const subscriptions = [
 export default function ExercisesScreen() {
   const router = useRouter(); // Initialiser le hook de navigation
   const [showSubscriptions, setShowSubscriptions] = useState(false); // État pour afficher ou masquer les abonnements
-  const [showPremiumOverlay, setShowPremiumOverlay] = useState(false);
-
-  useEffect(() => {
-    // Simuler la vérification d'abonnement - à remplacer par votre logique réelle
-    const hasPremiumAccess = false; // Intégrer votre logique de vérification ici
-    if (!hasPremiumAccess) {
-      setShowPremiumOverlay(true);
-    }
-  }, []);
 
   const toggleSubscriptions = () => {
     setShowSubscriptions(!showSubscriptions);
@@ -68,11 +58,6 @@ export default function ExercisesScreen() {
             <Ionicons name="chevron-forward" size={24} color="#999" />
           </TouchableOpacity>
         )}
-      />
-
-      <PremiumOverlay 
-        isVisible={showPremiumOverlay} 
-        onClose={() => setShowPremiumOverlay(false)}
       />
 
       {/* Modal pour les abonnements */}

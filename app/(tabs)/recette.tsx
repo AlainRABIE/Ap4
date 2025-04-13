@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
-import PremiumOverlay from "../../components/PremiumOverlay";
 
 const RecettePage = () => {
   const [recipes, setRecipes] = useState<{ idMeal: string; strMeal: string; strCategory: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [ingredients, setIngredients] = useState('');
-  const [showPremiumOverlay, setShowPremiumOverlay] = useState(false);
 
-  // Fonction de traduction
   const translateText = async (text: string, targetLang: string) => {
     try {
       const sourceLang = targetLang === 'en' ? 'fr' : 'en';
@@ -23,23 +20,11 @@ const RecettePage = () => {
     }
   };
 
-  useEffect(() => {
-    // Simuler la vérification d'abonnement - à remplacer par votre logique réelle
-    const hasPremiumAccess = false; // Intégrer votre logique de vérification ici
-    if (!hasPremiumAccess) {
-      setShowPremiumOverlay(true);
-    }
-  }, []);
-
   const searchRecipes = async () => {
-    if (showPremiumOverlay) return; // Empêcher la recherche si l'overlay est visible
-
     setLoading(true);
     try {
-      // Traduire l'ingrédient en anglais
       const ingredientEnglish = await translateText(ingredients, 'en');
       
-      // Rechercher les recettes
       const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredientEnglish}`);
       const data = await response.json();
       
@@ -94,11 +79,6 @@ const RecettePage = () => {
           )}
         />
       )}
-
-      <PremiumOverlay 
-        isVisible={showPremiumOverlay} 
-        onClose={() => setShowPremiumOverlay(false)}
-      />
     </View>
   );
 };

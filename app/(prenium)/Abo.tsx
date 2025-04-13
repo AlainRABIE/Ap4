@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { collection, getDocs, getFirestore } from 'firebase/firestore'; // Ajout de getFirestore
 import app from '../../firebase/firebaseConfig';
 
-// Initialisation de Firestore
 const db = getFirestore(app);
 
 // Types pour les plans d'abonnement
