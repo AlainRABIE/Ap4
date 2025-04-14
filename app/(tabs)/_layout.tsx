@@ -3,10 +3,11 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, StyleSheet } from "react-native";
 
-function TabBarIcon({ name, color, size }: { 
+function TabBarIcon({ name, color, size, focused }: { 
   name: keyof typeof Ionicons.glyphMap; 
   color: string; 
   size: number;
+  focused: boolean;
 }) {
   return (
     <View style={styles.iconContainer}>
@@ -15,6 +16,7 @@ function TabBarIcon({ name, color, size }: {
         size={size}
         color={color} 
       />
+      {focused && <View style={styles.indicatorBar} />}
     </View>
   );
 }
@@ -43,42 +45,42 @@ function MyTabs() {
         name="Exercice"
         options={{
           title: "Exercice",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="barbell" size={size} color={color} />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="barbell" size={size} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="coach"
         options={{
           title: "Coach",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="body-outline" size={size} color={color} />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="body-outline" size={size} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="home"
         options={{
           title: "Accueil",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="chrono"
         options={{
           title: "Chrono",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="timer-outline" size={size} color={color} />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="timer-outline" size={size} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="recette"
         options={{
           title: "Recette",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="book" size={size} color={color} />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="book" size={size} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profil"
         options={{
           title: "Profil",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="person" size={size} color={color} />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
         }}
       />
     </Tabs>
@@ -95,5 +97,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 40,
     height: 40,
+    position: "relative",
+  },
+  indicatorBar: {
+    position: "absolute",
+    bottom: -10,
+    width: 20,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#FF6A88",
   }
 });
