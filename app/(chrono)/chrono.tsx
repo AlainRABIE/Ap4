@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function Chronometer() {
   const [time, setTime] = useState(0);
@@ -56,85 +57,201 @@ export default function Chronometer() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">Chronometer</h1>
+    <View style={styles.container}>
+      <Text style={styles.title}>Chronometer</Text>
       
-      <div className="mb-6 bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-4 bg-gray-100 border-b">
-          <h2 className="text-xl font-semibold text-center">Rest Timer</h2>
-        </div>
-        <div className="p-6 flex flex-col items-center">
-          <div className="text-5xl font-bold mb-6">{formatTime(time)}</div>
+      <View style={styles.timerCard}>
+        <View style={styles.timerHeader}>
+          <Text style={styles.timerTitle}>Rest Timer</Text>
+        </View>
+        <View style={styles.timerContent}>
+          <Text style={styles.timeDisplay}>{formatTime(time)}</Text>
           
-          <div className="flex gap-2 mb-4">
+          <View style={styles.buttonsRow}>
             {isRunning ? (
-              <button 
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100"
-                onClick={handlePause}
+              <TouchableOpacity 
+                style={styles.pauseButton}
+                onPress={handlePause}
               >
-                Pause
-              </button>
+                <Text style={styles.buttonText}>Pause</Text>
+              </TouchableOpacity>
             ) : (
-              <button 
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                onClick={handleStart}
+              <TouchableOpacity 
+                style={styles.startButton}
+                onPress={handleStart}
               >
-                Start
-              </button>
+                <Text style={styles.buttonText}>Start</Text>
+              </TouchableOpacity>
             )}
-            <button 
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              onClick={handleReset}
+            <TouchableOpacity 
+              style={styles.resetButton}
+              onPress={handleReset}
             >
-              Reset
-            </button>
-          </div>
-        </div>
-      </div>
+              <Text style={styles.buttonText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
       
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-4 bg-gray-100 border-b">
-          <h2 className="text-xl font-semibold text-center">Preset Timers</h2>
-        </div>
-        <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-2">
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => handlePreset(30)}
+      <View style={styles.presetCard}>
+        <View style={styles.presetHeader}>
+          <Text style={styles.presetTitle}>Preset Timers</Text>
+        </View>
+        <View style={styles.presetGrid}>
+          <TouchableOpacity 
+            style={styles.presetButton}
+            onPress={() => handlePreset(30)}
           >
-            30s
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => handlePreset(60)}
+            <Text style={styles.presetButtonText}>30s</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.presetButton}
+            onPress={() => handlePreset(60)}
           >
-            1min
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => handlePreset(90)}
+            <Text style={styles.presetButtonText}>1min</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.presetButton}
+            onPress={() => handlePreset(90)}
           >
-            1min 30s
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => handlePreset(120)}
+            <Text style={styles.presetButtonText}>1min 30s</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.presetButton}
+            onPress={() => handlePreset(120)}
           >
-            2min
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => handlePreset(180)}
+            <Text style={styles.presetButtonText}>2min</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.presetButton}
+            onPress={() => handlePreset(180)}
           >
-            3min
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => handlePreset(300)}
+            <Text style={styles.presetButtonText}>3min</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.presetButton}
+            onPress={() => handlePreset(300)}
           >
-            5min
-          </button>
-        </div>
-      </div>
-    </div>
+            <Text style={styles.presetButtonText}>5min</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#F5F5F5',
+    paddingTop: 60,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    textAlign: 'center',
+    color: '#333',
+  },
+  timerCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  timerHeader: {
+    padding: 16,
+    backgroundColor: '#F0F0F0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  timerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#333',
+  },
+  timerContent: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  timeDisplay: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    color: '#333',
+  },
+  buttonsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  startButton: {
+    backgroundColor: '#4C7DFF',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  pauseButton: {
+    backgroundColor: '#999',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  resetButton: {
+    backgroundColor: '#FF5252',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  presetCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  presetHeader: {
+    padding: 16,
+    backgroundColor: '#F0F0F0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  presetTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#333',
+  },
+  presetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  presetButton: {
+    backgroundColor: '#4C7DFF',
+    width: '48%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  presetButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+});

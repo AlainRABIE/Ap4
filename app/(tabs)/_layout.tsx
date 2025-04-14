@@ -3,10 +3,18 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, StyleSheet } from "react-native";
 
-function TabBarIcon({ name, color, size }: { name: keyof typeof Ionicons.glyphMap; color: string; size: number }) {
+function TabBarIcon({ name, color, size }: { 
+  name: keyof typeof Ionicons.glyphMap; 
+  color: string; 
+  size: number;
+}) {
   return (
     <View style={styles.iconContainer}>
-      <Ionicons name={name} size={size} color={color} />
+      <Ionicons 
+        name={name} 
+        size={size}
+        color={color} 
+      />
     </View>
   );
 }
@@ -23,6 +31,7 @@ function MyTabs() {
       backgroundColor: "#FFFFFF",
       borderTopWidth: 0,
       borderRadius: 30,
+      height: 60,
     },
     tabBarActiveTintColor: "#FF6A88",
     tabBarInactiveTintColor: "#B0BEC5",
@@ -31,17 +40,31 @@ function MyTabs() {
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
-        name="index"
+        name="Exercice"
+        options={{
+          title: "Exercice",
+          tabBarIcon: ({ size, color }) => <TabBarIcon name="barbell" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="coach"
+        options={{
+          title: "Coach",
+          tabBarIcon: ({ size, color }) => <TabBarIcon name="body-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="home"
         options={{
           title: "Accueil",
           tabBarIcon: ({ size, color }) => <TabBarIcon name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="Exercice"
+        name="chrono"
         options={{
-          title: "Exercice",
-          tabBarIcon: ({ size, color }) => <TabBarIcon name="barbell" size={size} color={color} />,
+          title: "Chrono",
+          tabBarIcon: ({ size, color }) => <TabBarIcon name="timer-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -70,5 +93,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: "center",
     alignItems: "center",
-  },
+    width: 40,
+    height: 40,
+  }
 });

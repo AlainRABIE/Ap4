@@ -56,30 +56,24 @@ const NutritionScreen = () => {
 
   const router = useRouter();
 
-  // Mise à jour du podomètre pour récupérer les pas depuis le début de la journée
   useEffect(() => {
     const startPedometer = async () => {
       try {
-        // Vérifier si le podomètre est disponible
         const available = await Pedometer.isAvailableAsync();
         setIsPedometerAvailable(available);
 
         if (available) {
-          // Créer des dates pour aujourd'hui (début de journée jusqu'à maintenant)
           const end = new Date();
           const start = new Date();
           start.setHours(0, 0, 0, 0);
 
           try {
-            // Récupérer le nombre de pas pour aujourd'hui
             const pastStepData = await Pedometer.getStepCountAsync(start, end);
             if (pastStepData) {
               setSteps(pastStepData.steps);
             }
 
-            // Configurer le suivi continu des nouveaux pas
             const subscription = Pedometer.watchStepCount(result => {
-              // Ajouter les nouveaux pas au total déjà compté
               setSteps(currentSteps => currentSteps + result.steps);
             });
 
@@ -90,7 +84,6 @@ const NutritionScreen = () => {
             };
           } catch (err) {
             console.error("Erreur lors de l'accès au podomètre:", err);
-            // Gérer l'erreur de permission ou d'accès aux données du podomètre
           }
         } else {
           console.log("Le podomètre n'est pas disponible sur cet appareil");
@@ -103,7 +96,6 @@ const NutritionScreen = () => {
     startPedometer();
   }, []);
 
-  // Récupérer les calories pour tous les repas
   const fetchAllMealData = useCallback(async () => {
     setLoading(true);
     try {
@@ -120,7 +112,6 @@ const NutritionScreen = () => {
     }
   }, []);
 
-  // Fonction pour récupérer les données du podomètre
   const fetchPedometerData = useCallback(async () => {
     try {
       if (isPedometerAvailable) {
@@ -138,7 +129,6 @@ const NutritionScreen = () => {
     }
   }, [isPedometerAvailable]);
 
-  // Actualiser les données à chaque fois que l'écran est affiché
   useFocusEffect(
     useCallback(() => {
       const refreshData = async () => {
@@ -152,7 +142,6 @@ const NutritionScreen = () => {
     }, [fetchPedometerData, fetchAllMealData])
   );
 
-  // Calcul des calories totales, restantes et brûlées
   useEffect(() => {
     const fetchCalories = async () => {
       try {
@@ -177,7 +166,6 @@ const NutritionScreen = () => {
           setCaloriesTotales(caloriesNecessaires);
           setCaloriesRestantes(caloriesNecessaires - totalConsumed);
           
-          // Estimation plus précise des calories brûlées par pas
           const caloriesBruleesParPas = 0.05;
           const caloriesBrulees = Math.round(steps * caloriesBruleesParPas);
           setCaloriesBrulees(caloriesBrulees);
