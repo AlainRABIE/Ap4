@@ -1,32 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { View, StyleSheet, Text } from "react-native";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getUserData } from '../../services/auth';
 import app from '../../firebase/firebaseConfig';
 
-function TabBarIcon({ name, color, size, focused }: { 
-  name: keyof typeof Ionicons.glyphMap; 
+function TabBarIcon({ name, color, size, focused, iconType = "ionicon" }: { 
+  name: string; 
   color: string; 
   size: number;
   focused: boolean;
+  iconType?: "ionicon" | "material";
 }) {
   return (
     <View style={styles.iconContainer}>
-      <Ionicons 
-        name={name} 
-        size={size}
-        color={color} 
-      />
+      {iconType === "ionicon" ? (
+        <Ionicons 
+          name={name as any} 
+          size={size}
+          color={color} 
+        />
+      ) : (
+        <MaterialIcons 
+          name={name as any} 
+          size={size}
+          color={color} 
+        />
+      )}
       {focused && <View style={styles.indicatorBar} />}
     </View>
   );
 }
 
 function MyTabs({ userRole }: { userRole: string | null }) {
-  console.log("Rôle utilisateur actuel:", userRole); // Vérifiez cette valeur dans la console
-  
   const screenOptions = {
     headerShown: false,
     tabBarStyle: {
@@ -44,58 +51,84 @@ function MyTabs({ userRole }: { userRole: string | null }) {
     tabBarInactiveTintColor: "#B0BEC5",
   };
 
-  // Si l'utilisateur est admin, afficher UNIQUEMENT planning et client
-  if (userRole === 'admin') {
-    console.log("Interface admin activée"); // Debug log
+  if (userRole === "admin") {
     return (
-      <Tabs screenOptions={screenOptions} initialRouteName="planning">
+      <Tabs screenOptions={screenOptions} initialRouteName="admin">
         <Tabs.Screen
-          name="planning"
+          name="admin"
           options={{
-            title: "Planning",
-            headerShown: false,
-            tabBarIcon: ({ size, color, focused }) => 
-              <TabBarIcon name="calendar" size={size} color={color} focused={focused} />,
+            title: "Utilisateurs",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="people" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
-          name="client"
+          name="coachlist"
           options={{
-            title: "Client",
-            headerShown: false,
-            tabBarIcon: ({ size, color, focused }) => 
-              <TabBarIcon name="people" size={size} color={color} focused={focused} />,
+            title: "Coachs",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="school" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
-          name="home"
-          options={{ href: null }}
+          name="profilcoach"
+          options={{
+            title: "Profil Coach",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
+          }}
+        />
+        
+        {/* Hidden screens */}
+        <Tabs.Screen name="Exercice" options={{ href: null }} />
+        <Tabs.Screen name="coach" options={{ href: null }} />
+        <Tabs.Screen name="home" options={{ href: null }} />
+        <Tabs.Screen name="chrono" options={{ href: null }} />
+        <Tabs.Screen name="recette" options={{ href: null }} />
+        <Tabs.Screen name="profil" options={{ href: null }} />
+        <Tabs.Screen name="planning" options={{ href: null }} />
+        <Tabs.Screen name="client" options={{ href: null }} />
+      </Tabs>
+    );
+  }
+  
+  else if (userRole === "coach") {
+    return (
+      <Tabs screenOptions={screenOptions} initialRouteName="profilcoach">
+        <Tabs.Screen
+          name="profilcoach"
+          options={{
+            title: "Profil",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
+          }}
         />
         <Tabs.Screen
-          name="Exercice"
-          options={{ href: null }}
+          name="programmeclient"
+          options={{
+            title: "Programmes",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="list-outline" size={size} color={color} focused={focused} />,
+          }}
         />
         <Tabs.Screen
-          name="coach"
-          options={{ href: null }}
+          name="seance"
+          options={{
+            title: "Séances",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
+          }}
         />
-        <Tabs.Screen
-          name="chrono"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="recette"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="profil"
-          options={{ href: null }}
-        />
+        
+        {/* Hidden screens */}
+        <Tabs.Screen name="Exercice" options={{ href: null }} />
+        <Tabs.Screen name="coach" options={{ href: null }} />
+        <Tabs.Screen name="home" options={{ href: null }} />
+        <Tabs.Screen name="chrono" options={{ href: null }} />
+        <Tabs.Screen name="recette" options={{ href: null }} />
+        <Tabs.Screen name="profil" options={{ href: null }} />
+        <Tabs.Screen name="planning" options={{ href: null }} />
+        <Tabs.Screen name="client" options={{ href: null }} />
+        <Tabs.Screen name="admin" options={{ href: null }} />
+        <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
   }
 
-  // Interface utilisateur standard (par défaut)
   return (
     <Tabs screenOptions={screenOptions} initialRouteName="home">
       <Tabs.Screen
@@ -140,15 +173,15 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
         }}
       />
-      {/* Ces écrans existent mais ne sont pas visibles dans la tab bar */}
-      <Tabs.Screen
-        name="planning"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
-        name="client"
-        options={{ href: null }}
-      />
+
+      {/* Hidden screens */}
+      <Tabs.Screen name="planning" options={{ href: null }} />
+      <Tabs.Screen name="client" options={{ href: null }} />
+      <Tabs.Screen name="profilcoach" options={{ href: null }} />
+      <Tabs.Screen name="programmeclient" options={{ href: null }} />
+      <Tabs.Screen name="seance" options={{ href: null }} />
+      <Tabs.Screen name="admin" options={{ href: null }} />
+      <Tabs.Screen name="coachlist" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -164,17 +197,13 @@ export default function TabsLayout() {
         if (user) {
           console.log("Utilisateur connecté:", user.uid);
           const userData = await getUserData(user.uid);
-          console.log("Données utilisateur:", userData);
-          // Ajouter une log explicite pour le rôle
-          console.log("Rôle détecté:", userData.role);
-          setUserRole(userData.role);
+          setUserRole(userData.role); 
         } else {
           console.log("Aucun utilisateur connecté");
           setUserRole(null);
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération du rôle utilisateur:', error);
-        setUserRole(null);
+        console.error('Erreur lors de la récupération des données utilisateur:', error);
       } finally {
         setLoading(false);
       }
@@ -185,7 +214,7 @@ export default function TabsLayout() {
 
   if (loading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={styles.loadingContainer}>
         <Text>Chargement...</Text>
       </View>
     );
@@ -209,5 +238,10 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: "#FF6A88",
-  }
+  },
+  loadingContainer: {
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center'
+  },
 });

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert, Linking } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { Pedometer } from 'expo-sensors';
+import { auth } from '../../firebase/firebaseConfig'; // Assurez-vous que ce chemin est correct
 
 // Configuration des notifications
 Notifications.setNotificationHandler({
@@ -30,6 +31,51 @@ export default function Settings() {
   useEffect(() => {
     checkPedometerPermission();
   }, []);
+
+  // Fonction pour envoyer un email de demande pour devenir coach
+  const sendCoachRequest = async () => {
+    try {
+      // Récupération des informations de l'utilisateur connecté
+      const user = auth.currentUser;
+      
+      if (!user) {
+        Alert.alert("Erreur", "Vous devez être connecté pour faire cette demande");
+        return;
+      }
+      
+      // Préparation du contenu de l'email
+      const subject = encodeURIComponent("Demande pour devenir coach");
+      const body = encodeURIComponent(
+        `Bonjour,\n\n` +
+        `Je souhaite devenir coach sur l'application.\n\n` +
+        `Informations de l'utilisateur :\n` +
+        `- Email: ${user.email}\n` +
+        `- ID Utilisateur: ${user.uid}\n\n` +
+        `Merci de me contacter pour plus d'informations sur mes compétences et expériences.\n\n` +
+        `Cordialement,\n${user.displayName || user.email}`
+      );
+      
+      // Construction de l'URL mailto
+      const mailtoUrl = `mailto:rabie.alain001@gmail.com?subject=${subject}&body=${body}`;
+      
+      // Vérification que le lien peut être ouvert
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      
+      if (!canOpen) {
+        throw new Error("Impossible d'ouvrir l'application de messagerie");
+      }
+      
+      // Ouverture de l'application de messagerie par défaut
+      await Linking.openURL(mailtoUrl);
+      
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email:", error);
+      Alert.alert(
+        "Erreur", 
+        "Impossible d'ouvrir l'application de messagerie. Veuillez envoyer un email manuellement à rabie.alain001@gmail.com"
+      );
+    }
+  };
 
   const checkPedometerPermission = async () => {
     try {
@@ -203,6 +249,22 @@ export default function Settings() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <MaterialIcons name="school" size={24} color="#FF6A88" />
+          <Text style={styles.sectionTitle}>Devenir Coach</Text>
+        </View>
+        <Text style={styles.coachInfoText}>
+          Vous êtes un professionnel de la nutrition ou du fitness ? Partagez votre expertise en devenant coach sur notre plateforme.
+        </Text>
+        <TouchableOpacity 
+          style={styles.coachButton}
+          onPress={sendCoachRequest}
+        >
+          <Text style={styles.coachButtonText}>Postuler pour devenir coach</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Section Objectifs */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -251,7 +313,7 @@ export default function Settings() {
         </TouchableOpacity>
       </View>
 
-      {/* Section Podomètre - Ajouter avant la section Appareils Connectés */}
+      {/* Section Podomètre */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <MaterialIcons name="directions-walk" size={24} color="#ef4444" />
@@ -457,5 +519,22 @@ const styles = StyleSheet.create({
   unavailableText: {
     color: '#666',
     textAlign: 'center',
+  },
+  coachInfoText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  coachButton: {
+    backgroundColor: '#FF6A88',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  coachButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
-interface User {
+export interface User {
   uid: string;
   email: string;
   nomComplet?: string;
@@ -17,6 +17,9 @@ interface User {
   abonnement?: string;
   urlAvatar?: string;
 }
+
+// Export User interface as UserType for backward compatibility
+export type UserType = User;
 
 interface UserContextType {
   user: User | null;

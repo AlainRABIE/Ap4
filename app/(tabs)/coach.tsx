@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -8,12 +8,15 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Image, 
-  FlatList 
+  FlatList,
+  ActivityIndicator 
 } from 'react-native';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../firebase/firebaseConfig'; // Assurez-vous que ce chemin est correct
 
 // Interface pour définir la structure d'un coach
 interface Coach {
-  id: number;
+  id: string; // ID Firestore
   name: string;
   speciality: string;
   experience: number;
@@ -21,82 +24,63 @@ interface Coach {
   image: string;
   description: string;
   availability: boolean;
+  email?: string; // Optionnel, si disponible dans vos données
 }
-
-// Données fictives de coachs
-const coachesData: Coach[] = [
-  {
-    id: 1,
-    name: "Thomas Dubois",
-    speciality: "Musculation",
-    experience: 8,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Spécialiste en musculation et remise en forme avec 8 ans d'expérience.",
-    availability: true
-  },
-  {
-    id: 2,
-    name: "Sophie Martin",
-    speciality: "Yoga",
-    experience: 10,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Instructrice de yoga certifiée avec une approche holistique du bien-être.",
-    availability: true
-  },
-  {
-    id: 3,
-    name: "Karim Benzema",
-    speciality: "Cardio",
-    experience: 6,
-    rating: 4.6,
-    image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Expert en entraînement cardiovasculaire et préparation physique.",
-    availability: false
-  },
-  {
-    id: 4,
-    name: "Julie Dupont",
-    speciality: "Nutrition sportive",
-    experience: 12,
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Nutritionniste spécialisée dans l'accompagnement des sportifs.",
-    availability: true
-  },
-  {
-    id: 5,
-    name: "Marc Richard",
-    speciality: "CrossFit",
-    experience: 7,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1549476464-37392f717541?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Coach CrossFit certifié, passionné par le dépassement de soi.",
-    availability: true
-  },
-  {
-    id: 6,
-    name: "Nadia Comaneci",
-    speciality: "Pilates",
-    experience: 15,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1506777549229-d918df45b010?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Experte en Pilates avec une approche thérapeutique et préventive.",
-    availability: false
-  }
-];
 
 export default function CoachScreen() {
   const [specialityFilter, setSpecialityFilter] = useState<string>('');
+  const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Récupération des coachs depuis Firestore
+  useEffect(() => {
+    const fetchCoaches = async () => {
+      try {
+        setLoading(true);
+        
+        // Créer une requête pour obtenir les utilisateurs avec le rôle "coach"
+        const utilisateursRef = collection(db, "utilisateurs");
+        const q = query(utilisateursRef, where("role", "==", "coach"));
+        const querySnapshot = await getDocs(q);
+        
+        const coachesData: Coach[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Adapter les champs selon votre structure de données
+          coachesData.push({
+            id: doc.id,
+            name: data.nomComplet || data.name || "Coach sans nom",
+            speciality: data.specialite || "Général",
+            experience: data.experience || 1,
+            rating: data.rating || 5,
+            image: data.urlAvatar || data.image || "https://via.placeholder.com/150",
+            description: data.description || "Aucune description disponible",
+            availability: data.disponibilite !== undefined ? data.disponibilite : true,
+            email: data.email
+          });
+        });
+        
+        setCoaches(coachesData);
+        setLoading(false);
+      } catch (err) {
+        console.error("Erreur lors de la récupération des coachs:", err);
+        setError('Impossible de charger les coachs');
+        setLoading(false);
+      }
+    };
+    
+    fetchCoaches();
+  }, []);
   
   // Liste des spécialités uniques pour le filtre
-  const specialities = [...new Set(coachesData.map(coach => coach.speciality))];
+  const specialities = [...new Set(coaches.map(coach => coach.speciality))];
 
   // Filtrer les coachs par spécialité
   const filteredCoaches = specialityFilter
-    ? coachesData.filter(coach => coach.speciality === specialityFilter)
-    : coachesData;
+    ? coaches.filter(coach => coach.speciality === specialityFilter)
+    : coaches;
 
   // Afficher les étoiles selon la notation
   const renderStars = (rating: number) => {
@@ -111,6 +95,33 @@ export default function CoachScreen() {
       </View>
     );
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#FF6A88" />
+        <Text style={styles.loadingText}>Chargement des coachs...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            setLoading(true);
+            setCoaches([]);
+          }}
+        >
+          <Text style={styles.retryButtonText}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -166,6 +177,7 @@ export default function CoachScreen() {
               <Image
                 source={{ uri: item.image }}
                 style={styles.coachImage}
+                defaultSource={require('../../assets/images/default-avatar.png')} // Assurez-vous que ce fichier existe
               />
               <View style={[
                 styles.availabilityBadge,
@@ -278,6 +290,7 @@ const styles = StyleSheet.create({
   coachImage: {
     width: '100%',
     height: 200,
+    resizeMode: 'cover',
   },
   availabilityBadge: {
     position: 'absolute',
@@ -371,5 +384,30 @@ const styles = StyleSheet.create({
     color: '#757575',
     fontSize: 16,
     textAlign: 'center',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    color: '#666',
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#FF6A88',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
