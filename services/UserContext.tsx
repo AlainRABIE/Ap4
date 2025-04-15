@@ -1,82 +1,91 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase/firebaseConfig";
 
 export interface User {
   uid: string;
   email: string;
   nomComplet?: string;
   departement?: string;
-  poids?: number;
-  age?: number;
-  taille?: number;
+  poids?: string;
+  taille?: string;
+  age?: string;
   sexe?: string;
   niveauActivite?: string;
-  caloriesNecessaires?: number;
-  role?: string;
-  abonnement?: string;
+  caloriesNecessaires?: string;
   urlAvatar?: string;
+  role?: string;
 }
-
-// Export User interface as UserType for backward compatibility
-export type UserType = User;
 
 interface UserContextType {
   user: User | null;
-  setUser: (user: User | null) => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  loading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
+export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const auth = getAuth();
-    const db = getFirestore();
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         try {
-          // Récupérer les informations utilisateur depuis Firestore
-          const userDoc = doc(db, "utilisateurs", firebaseUser.uid);
-          const userSnapshot = await getDoc(userDoc);
-
-          if (userSnapshot.exists()) {
-            const userData = userSnapshot.data();
+          // Récupérer les données supplémentaires de l'utilisateur depuis Firestore
+          const userDoc = await getDoc(doc(db, "utilisateurs", firebaseUser.uid));
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",
-              ...userData // Cela va inclure tous les champs de Firestore
+              nomComplet: userData.nomComplet,
+              departement: userData.departement,
+              poids: userData.poids,
+              taille: userData.taille,
+              age: userData.age,
+              sexe: userData.sexe,
+              niveauActivite: userData.niveauActivite,
+              caloriesNecessaires: userData.caloriesNecessaires,
+              urlAvatar: userData.photoURL || userData.urlAvatar,
+              role: userData.role
             });
           } else {
-            // Si l'utilisateur n'existe pas dans Firestore, utilisez les données de Firebase Auth
+            // Si l'utilisateur n'a pas de document dans Firestore, on utilise seulement les infos de base
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",
             });
           }
         } catch (error) {
-          console.error("Erreur lors de la récupération des données utilisateur :", error);
+          console.error("Erreur lors de la récupération des données utilisateur:", error);
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || "",
+          });
         }
       } else {
-        setUser(null); // Déconnecter l'utilisateur
+        setUser(null);
       }
+      setLoading(false);
     });
 
-    return () => unsubscribe(); // Nettoyer l'abonnement
+    return () => unsubscribe();
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, loading }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-export const useUser = () => {
+export const useUser = (): UserContextType => {
   const context = useContext(UserContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useUser must be used within a UserProvider");
   }
   return context;

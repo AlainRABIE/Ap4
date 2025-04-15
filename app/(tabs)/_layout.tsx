@@ -5,6 +5,7 @@ import { View, StyleSheet, Text } from "react-native";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getUserData } from '../../services/auth';
 import app from '../../firebase/firebaseConfig';
+import { UserProvider } from "../../services/UserContext";
 
 function TabBarIcon({ name, color, size, focused, iconType = "ionicon" }: { 
   name: string; 
@@ -69,20 +70,19 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           }}
         />
         <Tabs.Screen
-          name="profilcoach"
+          name="profil"
           options={{
-            title: "Profil Coach",
+            title: "Profil",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
         
-        {/* Hidden screens */}
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
-        <Tabs.Screen name="profil" options={{ href: null }} />
+        <Tabs.Screen name="profilcoach" options={{ href: null }} />
         <Tabs.Screen name="planning" options={{ href: null }} />
         <Tabs.Screen name="client" options={{ href: null }} />
       </Tabs>
@@ -100,31 +100,31 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           }}
         />
         <Tabs.Screen
-          name="programmeclient"
+          name="planning"
           options={{
-            title: "Programmes",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="list-outline" size={size} color={color} focused={focused} />,
+            title: "Planning",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
-          name="seance"
+          name="client"
           options={{
-            title: "Séances",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
+            title: "Client",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="barbell" size={size} color={color} focused={focused} />,
           }}
         />
         
         {/* Hidden screens */}
-        <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />
+        <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
-        <Tabs.Screen name="planning" options={{ href: null }} />
-        <Tabs.Screen name="client" options={{ href: null }} />
         <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="coachlist" options={{ href: null }} />
+        <Tabs.Screen name="programmeclient" options={{ href: null }} />
+        <Tabs.Screen name="seance" options={{ href: null }} />
       </Tabs>
     );
   }
@@ -220,7 +220,11 @@ export default function TabsLayout() {
     );
   }
 
-  return <MyTabs userRole={userRole} />;
+  return (
+    <UserProvider>
+      <MyTabs userRole={userRole} />
+    </UserProvider>
+  );
 }
 
 const styles = StyleSheet.create({

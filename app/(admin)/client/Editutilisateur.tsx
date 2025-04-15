@@ -216,7 +216,6 @@ export default function EditUtilisateur() {
         </View>
       </View>
 
-      {/* Informations personnelles */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informations personnelles</Text>
         <View style={styles.fieldContainer}>

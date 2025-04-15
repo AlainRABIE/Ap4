@@ -1,5 +1,5 @@
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import app from '../firebase/firebaseConfig';
 
 // Initialisation de Firebase Auth et Firestore
@@ -94,6 +94,26 @@ export const getUserData = async (userId: string) => {
     return userDoc.data();
   } catch (error: any) {
     console.error('Erreur lors de la récupération des données utilisateur :', error.message);
+    throw new Error(error.message);
+  }
+};
+
+/**
+ * Met à jour les informations utilisateur dans Firestore
+ * @param userId - ID de l'utilisateur
+ * @param data - Données à mettre à jour
+ * @returns Promesse résolue lorsque la mise à jour est terminée
+ */
+export const updateUserData = async (userId: string, data: any) => {
+  try {
+    const userDocRef = doc(db, 'utilisateurs', userId);
+    await updateDoc(userDocRef, {
+      ...data,
+      updatedAt: new Date()
+    });
+    return true;
+  } catch (error: any) {
+    console.error('Erreur lors de la mise à jour des données utilisateur :', error.message);
     throw new Error(error.message);
   }
 };

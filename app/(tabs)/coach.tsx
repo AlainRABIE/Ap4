@@ -12,9 +12,9 @@ import {
   ActivityIndicator 
 } from 'react-native';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../firebase/firebaseConfig'; // Assurez-vous que ce chemin est correct
+import { db } from '../../firebase/firebaseConfig';
+import { useRouter } from 'expo-router';
 
-// Interface pour définir la structure d'un coach
 interface Coach {
   id: string; // ID Firestore
   name: string;
@@ -25,21 +25,21 @@ interface Coach {
   description: string;
   availability: boolean;
   email?: string; // Optionnel, si disponible dans vos données
+  prix: number; // Prix par séance - renamed from price to prix to match your Firestore field
 }
 
 export default function CoachScreen() {
+  const router = useRouter();
   const [specialityFilter, setSpecialityFilter] = useState<string>('');
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Récupération des coachs depuis Firestore
   useEffect(() => {
     const fetchCoaches = async () => {
       try {
         setLoading(true);
         
-        // Créer une requête pour obtenir les utilisateurs avec le rôle "coach"
         const utilisateursRef = collection(db, "utilisateurs");
         const q = query(utilisateursRef, where("role", "==", "coach"));
         const querySnapshot = await getDocs(q);
@@ -55,10 +55,11 @@ export default function CoachScreen() {
             speciality: data.specialite || "Général",
             experience: data.experience || 1,
             rating: data.rating || 5,
-            image: data.urlAvatar || data.image || "https://via.placeholder.com/150",
+            image: data.photoURL || data.urlAvatar || data.image || "https://via.placeholder.com/150", // Check photoURL first
             description: data.description || "Aucune description disponible",
             availability: data.disponibilite !== undefined ? data.disponibilite : true,
-            email: data.email
+            email: data.email,
+            prix: data.prix || 50 // Prix par défaut si non spécifié
           });
         });
         
@@ -199,9 +200,12 @@ export default function CoachScreen() {
               
               <Text style={styles.coachDescription}>{item.description}</Text>
               
-              <View style={styles.experienceRow}>
+              <View style={styles.detailsRow}>
                 <Text style={styles.experienceText}>
                   {item.experience} ans d'expérience
+                </Text>
+                <Text style={styles.priceText}>
+                  {item.prix}€ / séance
                 </Text>
               </View>
               
@@ -214,6 +218,26 @@ export default function CoachScreen() {
               >
                 <Text style={styles.profileButtonText}>
                   {item.availability ? 'Voir le profil' : 'Non disponible'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.appointmentButton,
+                  !item.availability && styles.appointmentButtonDisabled
+                ]}
+                disabled={!item.availability}
+                onPress={() => {
+                  if (item.availability) {
+                    // Navigation vers la page de rendez-vous avec l'ID du coach
+                    router.push({
+                      pathname: '/(client)/rendezvous',
+                      params: { coachId: item.id, coachName: item.name }
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.appointmentButtonText}>
+                  {item.availability ? 'Prendre rendez-vous' : 'Non disponible'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -361,16 +385,42 @@ const styles = StyleSheet.create({
     color: '#757575',
     fontSize: 14,
   },
+  detailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  priceText: {
+    color: '#FF6A88',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   profileButton: {
     backgroundColor: '#FF6A88',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 10, // Ajout d'une marge en bas pour séparer les boutons
   },
   profileButtonDisabled: {
     backgroundColor: '#E0E0E0',
   },
   profileButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  appointmentButton: {
+    backgroundColor: '#4CAF50', // Couleur verte pour différencier de l'autre bouton
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  appointmentButtonDisabled: {
+    backgroundColor: '#E0E0E0',
+  },
+  appointmentButtonText: {
     color: '#FFF',
     fontWeight: '600',
     fontSize: 16,

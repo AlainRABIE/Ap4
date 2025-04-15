@@ -316,10 +316,10 @@ const ViewProfilePage: React.FC = () => {
                   value={newValue}
                   onChangeText={setNewValue}
                   placeholder={`Entrez ${fieldToEdit === "poids" ? "votre poids en kg" :
-                      fieldToEdit === "age" ? "votre âge" :
-                        fieldToEdit === "taille" ? "votre taille en cm" :
-                          fieldToEdit === "niveauActivite" ? "votre niveau d'activité" :
-                            `un nouveau ${fieldToEdit}`
+                    fieldToEdit === "age" ? "votre âge" :
+                      fieldToEdit === "taille" ? "votre taille en cm" :
+                        fieldToEdit === "niveauActivite" ? "votre niveau d'activité" :
+                          `un nouveau ${fieldToEdit}`
                     }`}
                   keyboardType={fieldToEdit === "poids" || fieldToEdit === "age" || fieldToEdit === "taille" ? "numeric" : "default"}
                 />

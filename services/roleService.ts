@@ -48,3 +48,21 @@ export const isAdmin = async (): Promise<boolean> => {
 export const isCoach = async (): Promise<boolean> => {
   return await hasRole('coach');
 };
+
+/**
+ * Redirects user based on their role
+ * @param router The router object used for navigation
+ * @returns A promise that resolves when redirection logic completes
+ */
+export const handleRoleBasedRedirection = async (router: any): Promise<void> => {
+  try {
+    const userRole = await getCurrentUserRole();
+    
+    if (userRole === 'coach') {
+      router.replace('/coach/Forfait');
+    }
+    
+  } catch (error) {
+    console.error('Error during role-based redirection:', error);
+  }
+};

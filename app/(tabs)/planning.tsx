@@ -23,10 +23,7 @@ export default function PlanningScreen() {
     const dayOfWeek = today.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
     const startDate = new Date(today);
     
-    // Définir le premier jour de la semaine en cours (lundi)
     startDate.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); 
-    
-    // Appliquer le décalage de semaine
     startDate.setDate(startDate.getDate() + (currentWeekOffset * 7));
 
     for (let i = 0; i < 7; i++) {

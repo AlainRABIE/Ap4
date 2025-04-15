@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, ScrollView, View, Text, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
-import { TextInput, Button } from 'react-native-paper'; // Utilisation de React Native Paper pour des composants modernes
+import { TextInput, Button, Surface } from 'react-native-paper'; // Ajout de Surface pour un style plus moderne
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter, router } from 'expo-router';
 import app from '../../firebase/firebaseConfig';
+import { StatusBar } from 'expo-status-bar';
 
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 const ProfileSetup = () => {
     const [nomComplet, setNomComplet] = useState('');
-    const [departement, setDepartement] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -27,6 +27,11 @@ const ProfileSetup = () => {
             Alert.alert('Erreur', 'Aucun utilisateur trouvé.');
             return;
         }
+        
+        if (!nomComplet.trim()) {
+            Alert.alert('Attention', 'Veuillez saisir votre nom complet');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -34,7 +39,6 @@ const ProfileSetup = () => {
                 doc(db, 'utilisateurs', user.uid),
                 {
                     nomComplet,
-                    departement,
                     dateModification: new Date(),
                 },
                 { merge: true }
@@ -56,39 +60,40 @@ const ProfileSetup = () => {
             style={styles.container}
             keyboardVerticalOffset={100}
         >
+            <StatusBar style="auto" />
             <ScrollView 
                 contentContainerStyle={styles.scrollContainer}
                 keyboardShouldPersistTaps="handled"
             >
-                <Text style={styles.title}>Complétez votre Profil</Text>
-
-                <TextInput
-                    label="Nom Complet"
-                    value={nomComplet}
-                    onChangeText={(e) => {setNomComplet(e); console.log(e)}}
-                    style={styles.input}
+                <Surface style={styles.card}>
+                    <Text style={styles.title}>Complétez votre Profil</Text>
                     
-                />
+                    <TextInput
+                        label="Nom Complet"
+                        value={nomComplet}
+                        onChangeText={setNomComplet}
+                        style={styles.input}
+                        mode="outlined"
+                        outlineColor="#5E72E4"
+                        activeOutlineColor="#5E72E4"
+                        left={<TextInput.Icon icon="account" />}
+                        autoCapitalize="words"
+                    />
 
-                <TextInput
-                    label="Département"
-                    value={departement}
-                    onChangeText={setDepartement}
-                    style={styles.input}
-                />
-
-                {loading ? (
-                    <ActivityIndicator animating={true} color="#6200EE" style={styles.loader} />
-                ) : (
-                    <Button
-                        mode="contained"
-                        onPress={handleSaveProfile}
-                        style={styles.button}
-                        disabled={loading}
-                    >
-                        Enregistrer
-                    </Button>
-                )}
+                    {loading ? (
+                        <ActivityIndicator animating={true} color="#5E72E4" size="large" style={styles.loader} />
+                    ) : (
+                        <Button
+                            mode="contained"
+                            onPress={handleSaveProfile}
+                            style={styles.button}
+                            buttonColor="#5E72E4"
+                            disabled={loading}
+                        >
+                            Enregistrer
+                        </Button>
+                    )}
+                </Surface>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -97,6 +102,7 @@ const ProfileSetup = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#F7FAFC',
     },
     scrollContainer: {
         flexGrow: 1,
@@ -104,18 +110,34 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
+    card: {
+        padding: 24,
+        borderRadius: 12,
+        width: '95%',
+        maxWidth: 500,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
     title: {
-        fontSize: 24,
-        marginBottom: 20,
+        fontSize: 28,
+        marginBottom: 30,
         fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#1A365D',
     },
     input: {
         width: '100%',
-        marginBottom: 15,
+        marginBottom: 20,
+        backgroundColor: '#fff',
     },
     button: {
         marginTop: 20,
         width: '100%',
+        paddingVertical: 6,
+        borderRadius: 8,
     },
     loader: {
         marginTop: 20,

@@ -126,7 +126,6 @@ export default function UtilisateursScreen() {
       console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
       let errorMessage = 'Impossible d\'envoyer l\'email de réinitialisation.';
       
-      // Handle specific Firebase auth errors
       if (error && typeof error === 'object' && 'code' in error) {
         if (error.code === 'auth/user-not-found') {
           errorMessage = 'Aucun utilisateur trouvé avec cet email.';
