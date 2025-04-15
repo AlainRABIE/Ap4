@@ -10,8 +10,10 @@ import {
   Alert
 } from 'react-native';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { db } from '../../../firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 interface User {
   id: string;
@@ -22,6 +24,7 @@ interface User {
 }
 
 export default function UtilisateursScreen() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +113,32 @@ export default function UtilisateursScreen() {
     }
   };
 
+  const sendPasswordReset = async (email: string) => {
+    try {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        'Email envoyé',
+        `Un email de réinitialisation de mot de passe a été envoyé à ${email}.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
+      let errorMessage = 'Impossible d\'envoyer l\'email de réinitialisation.';
+      
+      // Handle specific Firebase auth errors
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'Aucun utilisateur trouvé avec cet email.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'L\'adresse email est invalide.';
+        }
+      }
+      
+      Alert.alert('Erreur', errorMessage);
+    }
+  };
+
   const renderUserItem = ({ item }: { item: User }) => (
     <TouchableOpacity
       style={styles.userCard}
@@ -121,6 +150,25 @@ export default function UtilisateursScreen() {
             {
               text: 'Détails',
               onPress: () => Alert.alert('Détails', `ID: ${item.id}\nEmail: ${item.email}\nRôle: ${item.role}`)
+            },
+            {
+              text: 'Modifier',
+              onPress: () => {
+                router.push(`/client/Editutilisateur?id=${item.id}`);
+              }
+            },
+            {
+              text: 'Réinitialiser mot de passe',
+              onPress: () => {
+                Alert.alert(
+                  'Confirmer',
+                  `Envoyer un email de réinitialisation de mot de passe à ${item.email}?`,
+                  [
+                    { text: 'Annuler', style: 'cancel' },
+                    { text: 'Envoyer', onPress: () => sendPasswordReset(item.email) }
+                  ]
+                );
+              }
             },
             {
               text: 'Promouvoir en coach',
@@ -154,7 +202,31 @@ export default function UtilisateursScreen() {
           </View>
         </View>
       </View>
-      <MaterialIcons name="chevron-right" size={24} color="#CBD5E1" />
+      
+      <View style={styles.actionButtons}>
+        <TouchableOpacity 
+          style={styles.editButton}
+          onPress={() => router.push(`/client/Editutilisateur?id=${item.id}`)}
+        >
+          <MaterialIcons name="edit" size={18} color="#3B82F6" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.resetButton}
+          onPress={() => {
+            Alert.alert(
+              'Réinitialiser mot de passe',
+              `Envoyer un email de réinitialisation à ${item.email}?`,
+              [
+                { text: 'Annuler', style: 'cancel' },
+                { text: 'Envoyer', onPress: () => sendPasswordReset(item.email) }
+              ]
+            );
+          }}
+        >
+          <MaterialIcons name="lock-reset" size={18} color="#F59E0B" />
+        </TouchableOpacity>
+        <MaterialIcons name="chevron-right" size={24} color="#CBD5E1" />
+      </View>
     </TouchableOpacity>
   );
 
@@ -371,5 +443,21 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 12,
     textAlign: 'center',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
+  },
+  resetButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: '#FEF3C7',
   },
 });

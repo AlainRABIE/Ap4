@@ -152,7 +152,7 @@ export default function CoachScreen() {
   const demoteToUser = async (coachId: string) => {
     try {
       const coachRef = doc(db, 'utilisateurs', coachId);
-      await updateDoc(coachRef, { role: 'user' });
+      await updateDoc(coachRef, { role: 'utilisateur' });
       
       // Mettre à jour l'interface utilisateur en retirant le coach de la liste
       setCoaches(prevCoaches => prevCoaches.filter(coach => coach.id !== coachId));
@@ -203,7 +203,6 @@ export default function CoachScreen() {
             {
               text: 'Modifier',
               onPress: () => {
-                // Example: Open a modal to edit coach details
                 updateCoach(item.id, { nomComplet: 'Nom Modifié' });
               }
             },
@@ -216,6 +215,19 @@ export default function CoachScreen() {
                   [
                     { text: 'Annuler' },
                     { text: 'Confirmer', onPress: () => deleteCoach(item.id) }
+                  ]
+                );
+              }
+            },
+            {
+              text: 'Rétrograder',
+              onPress: () => {
+                Alert.alert(
+                  'Confirmer',
+                  `Êtes-vous sûr de vouloir rétrograder ${item.nomComplet || item.email} au rôle d'utilisateur?`,
+                  [
+                    { text: 'Annuler' },
+                    { text: 'Confirmer', onPress: () => demoteToUser(item.id) }
                   ]
                 );
               }
