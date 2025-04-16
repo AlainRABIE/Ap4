@@ -17,6 +17,22 @@ import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "fi
 import { getAuth } from "firebase/auth";
 import { useFocusEffect } from '@react-navigation/native';
 
+// Définition de l'interface pour les aliments
+interface Aliment {
+  id: string;
+  nom: string;
+  calories: number;
+  urlPhoto: string;
+}
+
+// Interface pour les repas par type
+interface RepasData {
+  "Petit-déjeuner": Aliment[];
+  "Déjeuner": Aliment[];
+  "Dîner": Aliment[];
+  "Collation": Aliment[];
+}
+
 // Palette de couleurs néomorphique
 const COLORS = {
   background: '#ECEFF1',  // Fond gris très clair
@@ -53,6 +69,14 @@ const NutritionScreen = () => {
   const [lunchCalories, setLunchCalories] = useState(0);
   const [dinnerCalories, setDinnerCalories] = useState(0);
   const [snackCalories, setSnackCalories] = useState(0);
+  
+  // État pour stocker les aliments par repas et par date avec le type correct
+  const [repasData, setRepasData] = useState<RepasData>({
+    "Petit-déjeuner": [],
+    "Déjeuner": [],
+    "Dîner": [],
+    "Collation": []
+  });
 
   const router = useRouter();
 
@@ -96,21 +120,91 @@ const NutritionScreen = () => {
     startPedometer();
   }, []);
 
+  // Fonction pour formater la date au format ISO (YYYY-MM-DD) pour comparer avec les dates de Firestore
+  const formatDateForQuery = (date: Date): string => {
+    return date.toISOString().split('T')[0]; // Retourne YYYY-MM-DD
+  };
+
   const fetchAllMealData = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([
-        fetchMealCalories("Petit-déjeuner", setBreakfastCalories),
-        fetchMealCalories("Déjeuner", setLunchCalories),
-        fetchMealCalories("Dîner", setDinnerCalories),
-        fetchMealCalories("Collation", setSnackCalories),
+        fetchMealByDate("Petit-déjeuner"),
+        fetchMealByDate("Déjeuner"),
+        fetchMealByDate("Dîner"),
+        fetchMealByDate("Collation")
       ]);
     } catch (error) {
       console.error("Erreur lors de la récupération des repas:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentDay]);
+
+  // Nouvelle fonction pour récupérer les aliments par date et type de repas
+  const fetchMealByDate = async (mealType: "Petit-déjeuner" | "Déjeuner" | "Dîner" | "Collation") => {
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) return;
+
+      const db = getFirestore();
+      const dateString = formatDateForQuery(currentDay);
+      
+      const q = query(
+        collection(db, "aliments"),
+        where("utilisateurId", "==", currentUser.uid),
+        where("Repas", "==", mealType)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const meals: Aliment[] = [];
+      let totalCalories = 0;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Vérifier si la date de l'aliment correspond à la date sélectionnée
+        const alimDate = data.date ? new Date(data.date).toISOString().split('T')[0] : null;
+        
+        if (alimDate === dateString) {
+          const calories = parseInt(data.calories || 0);
+          totalCalories += calories;
+          
+          meals.push({
+            id: doc.id,
+            nom: data.nom || "Aliment sans nom",
+            calories: calories,
+            urlPhoto: data.urlPhoto || ""
+          });
+        }
+      });
+
+      // Mettre à jour les calories pour ce type de repas
+      switch (mealType) {
+        case "Petit-déjeuner":
+          setBreakfastCalories(totalCalories);
+          break;
+        case "Déjeuner":
+          setLunchCalories(totalCalories);
+          break;
+        case "Dîner":
+          setDinnerCalories(totalCalories);
+          break;
+        case "Collation":
+          setSnackCalories(totalCalories);
+          break;
+      }
+
+      // Mettre à jour les données des aliments avec le type correct
+      setRepasData(prev => ({
+        ...prev,
+        [mealType]: meals
+      }));
+    } catch (error) {
+      console.error(`Erreur pour ${mealType}:`, error);
+    }
+  };
 
   const fetchPedometerData = useCallback(async () => {
     try {
@@ -141,6 +235,11 @@ const NutritionScreen = () => {
       refreshData();
     }, [fetchPedometerData, fetchAllMealData])
   );
+  
+  // Ajouter un useEffect pour réagir aux changements de date
+  useEffect(() => {
+    fetchAllMealData();
+  }, [currentDay, fetchAllMealData]);
 
   useEffect(() => {
     const fetchCalories = async () => {
@@ -177,34 +276,6 @@ const NutritionScreen = () => {
 
     fetchCalories();
   }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories]);
-
-  const fetchMealCalories = async (mealType: unknown, setMealCalories: { (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (value: React.SetStateAction<number>): void; (arg0: number): void; }) => {
-    try {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) return;
-
-      const db = getFirestore();
-      const q = query(
-        collection(db, "aliments"),
-        where("utilisateurId", "==", currentUser.uid),
-        where("Repas", "==", mealType)
-      );
-
-      const querySnapshot = await getDocs(q);
-      let totalCalories = 0;
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        totalCalories += parseInt(data.calories || 0);
-      });
-
-      setMealCalories(totalCalories);
-    } catch (error) {
-      console.error(`Erreur pour ${mealType}:`, error);
-    }
-  };
 
   const handleAddGlass = () => {
     if (waterGlasses < 8) setWaterGlasses(waterGlasses + 1);
@@ -268,7 +339,11 @@ const NutritionScreen = () => {
           
           <View style={styles.dateNavigationContainer}>
             <TouchableOpacity
-              onPress={() => setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)))}
+              onPress={() => {
+                const newDate = new Date(currentDay);
+                newDate.setDate(newDate.getDate() - 1);
+                setCurrentDay(newDate);
+              }}
               style={styles.navButton}
             >
               <Ionicons name="chevron-back-outline" size={20} color={COLORS.textSecondary} />
@@ -285,7 +360,11 @@ const NutritionScreen = () => {
             </View>
             
             <TouchableOpacity
-              onPress={() => setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)))}
+              onPress={() => {
+                const newDate = new Date(currentDay);
+                newDate.setDate(newDate.getDate() + 1);
+                setCurrentDay(newDate);
+              }}
               style={styles.navButton}
             >
               <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textSecondary} />
@@ -392,7 +471,7 @@ const NutritionScreen = () => {
               <View style={styles.iconCircle}>
                 <Ionicons name="restaurant-outline" size={20} color={COLORS.accent} />
               </View>
-              <Text style={styles.cardTitle}>Repas d'aujourd'hui</Text>
+              <Text style={styles.cardTitle}>Repas du {formatDate(currentDay)}</Text>
             </View>
             <TouchableOpacity 
               style={styles.addMealButton}
@@ -430,6 +509,19 @@ const NutritionScreen = () => {
                     ]} 
                   />
                 </View>
+                
+                {repasData["Petit-déjeuner"] && repasData["Petit-déjeuner"].length > 0 ? (
+                  <View style={styles.foodItemsContainer}>
+                    {repasData["Petit-déjeuner"].map((item) => (
+                      <View key={item.id} style={styles.foodItem}>
+                        <Text style={styles.foodName}>{item.nom}</Text>
+                        <Text style={styles.foodCalories}>{item.calories} kcal</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyMealText}>Aucun aliment pour ce jour</Text>
+                )}
               </View>
               
               <View style={styles.mealChevron}>
@@ -464,6 +556,19 @@ const NutritionScreen = () => {
                     ]} 
                   />
                 </View>
+                
+                {repasData["Déjeuner"] && repasData["Déjeuner"].length > 0 ? (
+                  <View style={styles.foodItemsContainer}>
+                    {repasData["Déjeuner"].map((item) => (
+                      <View key={item.id} style={styles.foodItem}>
+                        <Text style={styles.foodName}>{item.nom}</Text>
+                        <Text style={styles.foodCalories}>{item.calories} kcal</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyMealText}>Aucun aliment pour ce jour</Text>
+                )}
               </View>
               
               <View style={styles.mealChevron}>
@@ -498,6 +603,19 @@ const NutritionScreen = () => {
                     ]} 
                   />
                 </View>
+                
+                {repasData["Dîner"] && repasData["Dîner"].length > 0 ? (
+                  <View style={styles.foodItemsContainer}>
+                    {repasData["Dîner"].map((item) => (
+                      <View key={item.id} style={styles.foodItem}>
+                        <Text style={styles.foodName}>{item.nom}</Text>
+                        <Text style={styles.foodCalories}>{item.calories} kcal</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyMealText}>Aucun aliment pour ce jour</Text>
+                )}
               </View>
               
               <View style={styles.mealChevron}>
@@ -532,6 +650,19 @@ const NutritionScreen = () => {
                     ]} 
                   />
                 </View>
+                
+                {repasData["Collation"] && repasData["Collation"].length > 0 ? (
+                  <View style={styles.foodItemsContainer}>
+                    {repasData["Collation"].map((item) => (
+                      <View key={item.id} style={styles.foodItem}>
+                        <Text style={styles.foodName}>{item.nom}</Text>
+                        <Text style={styles.foodCalories}>{item.calories} kcal</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyMealText}>Aucun aliment pour ce jour</Text>
+                )}
               </View>
               
               <View style={styles.mealChevron}>
@@ -948,7 +1079,35 @@ const styles = StyleSheet.create({
   caloriesBurnedLabel: {
     fontSize: 14,
     color: COLORS.textSecondary,
-  }
+  },
+  foodItemsContainer: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  foodItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  foodName: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  foodCalories: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+  },
+  emptyMealText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: COLORS.textSecondary,
+    marginTop: 8,
+  },
 });
 
 export default NutritionScreen;

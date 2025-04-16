@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, ScrollView, View, Text, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
-import { TextInput, Button, Surface } from 'react-native-paper'; // Ajout de Surface pour un style plus moderne
+import { TextInput, Button, Surface } from 'react-native-paper';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter, router } from 'expo-router';
@@ -17,7 +17,7 @@ const ProfileSetup = () => {
     useEffect(() => {
         const user = auth.currentUser;
         if (!user) {
-            router.replace('/login'); 
+            router.replace('/login');
         }
     }, []);
 
@@ -27,7 +27,7 @@ const ProfileSetup = () => {
             Alert.alert('Erreur', 'Aucun utilisateur trouvé.');
             return;
         }
-        
+
         if (!nomComplet.trim()) {
             Alert.alert('Attention', 'Veuillez saisir votre nom complet');
             return;
@@ -44,7 +44,7 @@ const ProfileSetup = () => {
                 { merge: true }
             );
 
-            router.replace('/ProfileData'); 
+            router.replace('/ProfileData');
             Alert.alert('Succès', 'Profil mis à jour avec succès!');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue.';
@@ -55,19 +55,19 @@ const ProfileSetup = () => {
     };
 
     return (
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.container}
             keyboardVerticalOffset={100}
         >
             <StatusBar style="auto" />
-            <ScrollView 
+            <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 keyboardShouldPersistTaps="handled"
             >
                 <Surface style={styles.card}>
                     <Text style={styles.title}>Complétez votre Profil</Text>
-                    
+
                     <TextInput
                         label="Nom Complet"
                         value={nomComplet}
