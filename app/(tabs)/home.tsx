@@ -471,14 +471,8 @@ const NutritionScreen = () => {
               <View style={styles.iconCircle}>
                 <Ionicons name="restaurant-outline" size={20} color={COLORS.accent} />
               </View>
-              <Text style={styles.cardTitle}>Repas du {formatDate(currentDay)}</Text>
+              <Text style={styles.cardTitle}>Repas</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.addMealButton}
-              onPress={() => router.push("/Add")}
-            >
-              <Ionicons name="add-outline" size={24} color={COLORS.textPrimary} />
-            </TouchableOpacity>
           </View>
           
           <View style={styles.mealList}>
