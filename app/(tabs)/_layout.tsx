@@ -5,7 +5,6 @@ import { View, StyleSheet, Text } from "react-native";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getUserData } from '../../services/auth';
 import app from '../../firebase/firebaseConfig';
-import { UserProvider } from "../../services/UserContext";
 
 function TabBarIcon({ name, color, size, focused, iconType = "ionicon" }: { 
   name: string; 
@@ -58,33 +57,42 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen
           name="admin"
           options={{
+            title: "Dashboard",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
+          name="Listutilisateur"
+          options={{
             title: "Utilisateurs",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="people" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
-          name="coachlist"
+          name="Listcoach"
           options={{
             title: "Coachs",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="school" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
-          name="profil"
+          name="profilcoach"
           options={{
             title: "Profil",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
         
+        {/* Hidden screens */}
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
-        <Tabs.Screen name="profilcoach" options={{ href: null }} />
+        <Tabs.Screen name="profil" options={{ href: null }} />
         <Tabs.Screen name="planning" options={{ href: null }} />
         <Tabs.Screen name="client" options={{ href: null }} />
+        <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
   }
@@ -100,31 +108,31 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           }}
         />
         <Tabs.Screen
-          name="planning"
+          name="programmeclient"
           options={{
-            title: "Planning",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar" size={size} color={color} focused={focused} />,
+            title: "Programmes",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="list-outline" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
-          name="client"
+          name="seance"
           options={{
-            title: "Client",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="barbell" size={size} color={color} focused={focused} />,
+            title: "Séances",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
           }}
         />
         
         {/* Hidden screens */}
+        <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />
-        <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
+        <Tabs.Screen name="planning" options={{ href: null }} />
+        <Tabs.Screen name="client" options={{ href: null }} />
         <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="coachlist" options={{ href: null }} />
-        <Tabs.Screen name="programmeclient" options={{ href: null }} />
-        <Tabs.Screen name="seance" options={{ href: null }} />
       </Tabs>
     );
   }
@@ -220,11 +228,7 @@ export default function TabsLayout() {
     );
   }
 
-  return (
-    <UserProvider>
-      <MyTabs userRole={userRole} />
-    </UserProvider>
-  );
+  return <MyTabs userRole={userRole} />;
 }
 
 const styles = StyleSheet.create({

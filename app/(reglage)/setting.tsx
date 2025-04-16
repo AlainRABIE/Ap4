@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert, Linking } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
+// import * as Notifications from 'expo-notifications'; // Désactivation des notifications
 import { Pedometer } from 'expo-sensors';
 import { auth } from '../../firebase/firebaseConfig'; // Assurez-vous que ce chemin est correct
 
-// Configuration des notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Configuration des notifications commentée pour éviter les avertissements
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
 
 export default function Settings() {
   const [units, setUnits] = useState('metric');
@@ -100,99 +100,24 @@ export default function Settings() {
 
   // Fonction pour demander les permissions
   async function requestPermissions() {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission requise', 'Vous devez autoriser les notifications pour utiliser cette fonctionnalité.');
-      return false;
-    }
-    return true;
+    // Fonction désactivée pour éviter les avertissements de notification
+    Alert.alert('Fonctionnalité désactivée', 'Les notifications ont été désactivées dans cette version de l\'application.');
+    return false;
   }
 
   // Fonction pour planifier les notifications de repas
   async function scheduleMealReminders(enabled: boolean) {
     if (enabled) {
-      const hasPermission = await requestPermissions();
-      if (!hasPermission) return;
-
-      await Notifications.cancelAllScheduledNotificationsAsync();
-
-      const now = new Date();
-      
-      // Petit-déjeuner (8h)
-      const breakfast = new Date(now);
-      breakfast.setHours(8, 0, 0, 0);
-      if (breakfast.getTime() < now.getTime()) {
-        breakfast.setDate(breakfast.getDate() + 1);
-      }
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Heure du petit-déjeuner!",
-          body: "N'oubliez pas d'enregistrer votre petit-déjeuner",
-        },
-        trigger: {
-          channelId: 'meals',
-          seconds: Math.floor((breakfast.getTime() - now.getTime()) / 1000),
-        },
-      });
-
-      // Déjeuner (12h)
-      const lunch = new Date(now);
-      lunch.setHours(12, 0, 0, 0);
-      if (lunch.getTime() < now.getTime()) {
-        lunch.setDate(lunch.getDate() + 1);
-      }
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Heure du déjeuner!",
-          body: "N'oubliez pas d'enregistrer votre déjeuner",
-        },
-        trigger: {
-          channelId: 'meals',
-          seconds: Math.floor((lunch.getTime() - now.getTime()) / 1000),
-        },
-      });
-
-      // Dîner (19h)
-      const dinner = new Date(now);
-      dinner.setHours(19, 0, 0, 0);
-      if (dinner.getTime() < now.getTime()) {
-        dinner.setDate(dinner.getDate() + 1);
-      }
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Heure du dîner!",
-          body: "N'oubliez pas d'enregistrer votre dîner",
-        },
-        trigger: {
-          channelId: 'meals',
-          seconds: Math.floor((dinner.getTime() - now.getTime()) / 1000),
-        },
-      });
-    } else {
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      Alert.alert('Fonctionnalité désactivée', 'Les rappels de repas ont été désactivés dans cette version de l\'application.');
+      // Nous gardons l'état du switch mais la fonctionnalité est désactivée
     }
   }
 
   // Fonction pour planifier les rappels d'eau
   async function scheduleWaterReminders(enabled: boolean) {
     if (enabled) {
-      const hasPermission = await requestPermissions();
-      if (!hasPermission) return;
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Hydratation!",
-          body: "Il est temps de boire de l'eau",
-        },
-        trigger: {
-          channelId: 'water',
-          seconds: 7200,
-          repeats: true,
-        },
-      });
+      Alert.alert('Fonctionnalité désactivée', 'Les rappels d\'hydratation ont été désactivés dans cette version de l\'application.');
+      // Nous gardons l'état du switch mais la fonctionnalité est désactivée
     }
   }
 
