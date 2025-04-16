@@ -286,17 +286,26 @@ const NutritionScreen = () => {
   };
 
   const navigateToAddMeal = (mealType: string) => {
+    // Convertir la date en string pour la passer en paramètre
+    const dateParam = currentDay.toISOString();
+    
     switch (mealType) {
       case "Déjeuner":
-        router.push("/(calorie)/AddMidi");
+        router.push({
+          pathname: "/(calorie)/AddMidi",
+          params: { date: dateParam }
+        });
         break;
       case "Dîner":
-        router.push("/(calorie)/AddSoir");
+        router.push({
+          pathname: "/(calorie)/AddSoir",
+          params: { date: dateParam }
+        });
         break;
       default:
         router.push({
           pathname: "/(calorie)/Add",
-          params: { mealType }
+          params: { mealType, date: dateParam }
         });
     }
   };

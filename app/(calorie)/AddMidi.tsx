@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,55 @@ import {
   Image,
   StyleSheet,
   Alert,
+  ScrollView,
+  ActivityIndicator,
+  SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 export default function AddMidi() {
   const [mealName, setMealName] = useState("");
   const [calories, setCalories] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const paramsProcessedRef = useRef(false);
+
   const router = useRouter();
+  const params = useLocalSearchParams();
   const db = getFirestore();
+  const auth = getAuth();
+
+  useEffect(() => {
+    if (paramsProcessedRef.current) return;
+
+    // Récupérer la date sélectionnée depuis les paramètres
+    if (params.date && typeof params.date === "string") {
+      try {
+        const dateFromParam = new Date(params.date);
+        if (!isNaN(dateFromParam.getTime())) {
+          setSelectedDate(dateFromParam);
+        }
+      } catch (error) {
+        console.error("Erreur lors du parsing de la date:", error);
+      }
+    }
+
+    paramsProcessedRef.current = true;
+  }, [params]);
+
+  // Formater la date pour l'affichage
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+  };
 
   const handleConfirm = async () => {
     if (!mealName || !calories) {
@@ -27,14 +64,22 @@ export default function AddMidi() {
     }
 
     try {
-      const userId = "1nH8cRhzzQYWIi3LTDD6Bx3SYLi2";
+      setLoading(true);
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        Alert.alert("Erreur", "Vous devez être connecté pour ajouter un repas.");
+        setLoading(false);
+        return;
+      }
+
       const newMeal = {
         nom: mealName,
         calories: parseInt(calories),
         Repas: "Déjeuner",
         urlPhoto: photo || "",
-        utilisateurId: userId,
-        date: new Date().toISOString(),
+        utilisateurId: currentUser.uid,
+        date: selectedDate.toISOString(), // Utiliser la date sélectionnée
       };
 
       await addDoc(collection(db, "aliments"), newMeal);
@@ -43,6 +88,8 @@ export default function AddMidi() {
     } catch (error) {
       console.error("Erreur lors de l'ajout du repas :", error);
       Alert.alert("Erreur", "Impossible d'ajouter le repas.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,50 +113,69 @@ export default function AddMidi() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="#333" />
-        <Text style={styles.backButtonText}>Retour</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Text style={styles.backButtonText}>Retour</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.title}>Ajouter un repas - Déjeuner</Text>
+        <Text style={styles.title}>Ajouter un repas - Déjeuner</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Entrez un plat ou un aliment"
-        value={mealName}
-        onChangeText={setMealName}
-      />
+        {/* Affichage de la date sélectionnée */}
+        <View style={styles.dateContainer}>
+          <Ionicons name="calendar" size={18} color="#666" />
+          <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Entrez le nombre de calories"
-        value={calories}
-        onChangeText={setCalories}
-        keyboardType="numeric"
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Entrez un plat ou un aliment"
+          value={mealName}
+          onChangeText={setMealName}
+        />
 
-      <TouchableOpacity style={styles.cameraContainer} onPress={takePhoto}>
-        <Ionicons name="camera" size={32} color="#fff" />
-        <Text style={styles.cameraText}>Prendre une photo</Text>
-      </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Entrez le nombre de calories"
+          value={calories}
+          onChangeText={setCalories}
+          keyboardType="numeric"
+        />
 
-      {photo && (
-        <Image source={{ uri: photo }} style={styles.photoPreview} />
-      )}
+        <TouchableOpacity style={styles.cameraContainer} onPress={takePhoto}>
+          <Ionicons name="camera" size={32} color="#fff" />
+          <Text style={styles.cameraText}>Prendre une photo</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-        <Text style={styles.confirmButtonText}>Confirmer</Text>
-      </TouchableOpacity>
-    </View>
+        {photo && (
+          <Image source={{ uri: photo }} style={styles.photoPreview} />
+        )}
+
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirm}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.confirmButtonText}>Confirmer</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#F4F4F4",
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 40,
   },
   backButton: {
     flexDirection: "row",
@@ -127,6 +193,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#333",
     textAlign: "center",
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    borderRadius: 8,
+    alignSelf: "center",
+  },
+  dateText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#666",
+    textTransform: "capitalize",
   },
   input: {
     borderWidth: 1,
