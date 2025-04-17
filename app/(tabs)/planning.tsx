@@ -143,12 +143,9 @@ export default function PlanningScreen() {
     }
   };
 
-  // Charger les données à chaque changement de semaine
   useEffect(() => {
     loadAvailabilities();
   }, [currentWeekOffset]);
-
-  // Sauvegarder les disponibilités dans Firebase
   const saveAvailability = async () => {
     try {
       setLoading(true);
@@ -160,33 +157,35 @@ export default function PlanningScreen() {
         return;
       }
 
-      // Parcourir toutes les dates et créneaux horaires
       for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
+        const currentDate = dates[dateIndex];
+        const cleanDate = new Date(currentDate);
+        cleanDate.setHours(0, 0, 0, 0);
+        
+        const availableHours = [];
         for (let timeIndex = 0; timeIndex < timeSlots.length; timeIndex++) {
-          // Ne sauvegarder que si le statut n'est pas UNDEFINED (0)
-          if (availability[timeIndex][dateIndex] !== STATUS.UNDEFINED) {
-            const currentDate = dates[dateIndex];
-            const timeSlot = timeSlots[timeIndex];
-            
-            // Construire une date précise pour ce créneau (date + heure)
-            const slotDateTime = new Date(currentDate);
-            const [hours, minutes] = timeSlot.split(':');
-            slotDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10) || 0, 0, 0);
-            
-            // La valeur 'dispo' est 0 si STATUS.BUSY (occupé) et 1 si STATUS.AVAILABLE (disponible)
-            const dispoValue = availability[timeIndex][dateIndex] === STATUS.AVAILABLE ? 1 : 0;
-            
-            // Créer un nouvel ID de document ou utiliser un ID basé sur la date/heure
-            // Ici nous utilisons un format qui garantit l'unicité: userId_date_time
-            const docId = `${user.uid}_${currentDate.toISOString().split('T')[0]}_${timeSlot.replace(':', '')}`;
-            
-            // Sauvegarder dans la collection disponibilite
-            await setDoc(doc(db, 'disponibilite', docId), {
-              dates: Timestamp.fromDate(slotDateTime),
-              dispo: dispoValue,
-              userId: user.uid
-            });
+          if (availability[timeIndex][dateIndex] === STATUS.AVAILABLE) {
+            availableHours.push(timeSlots[timeIndex]);
           }
+        }
+
+        // Créer un ID pour ce document basé sur la date et l'ID utilisateur
+        const docId = `${user.uid}_${cleanDate.toISOString().split('T')[0]}`;
+        
+        // Si des heures sont disponibles pour cette date, les enregistrer
+        if (availableHours.length > 0) {
+          await setDoc(doc(db, 'disponibilite', docId), {
+            coach: doc(db, 'utilisateurs', user.uid), // Référence à l'utilisateur coach
+            dates: Timestamp.fromDate(cleanDate),
+            dispo: availableHours // Tableau des heures disponibles
+          });
+        } else {
+          // Si aucune heure n'est disponible pour cette date, définir dispo à 0
+          await setDoc(doc(db, 'disponibilite', docId), {
+            coach: doc(db, 'utilisateurs', user.uid), // Référence à l'utilisateur coach
+            dates: Timestamp.fromDate(cleanDate),
+            dispo: [] // Tableau vide pour indiquer qu'aucune heure n'est disponible
+          });
         }
       }
       

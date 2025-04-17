@@ -25,7 +25,6 @@ import {
 import { db } from '../../firebase/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 
-// Structure des données de disponibilité
 interface Availability {
   id: string;
   coach: string;
@@ -33,7 +32,6 @@ interface Availability {
   dispo: string[];
 }
 
-// Structure de l'utilisateur connecté
 interface User {
   id: string;
   email: string;
@@ -53,7 +51,6 @@ export default function RendezVousScreen() {
   const [coachDetails, setCoachDetails] = useState<any>(null);
   const [bookingInProgress, setBookingInProgress] = useState(false);
 
-  // Récupérer l'utilisateur connecté
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -65,7 +62,6 @@ export default function RendezVousScreen() {
     }
   }, []);
 
-  // Récupérer les détails de l'utilisateur connecté
   const fetchUserDetails = async (userId: string) => {
     try {
       const userDoc = await getDoc(doc(db, 'utilisateurs', userId));
@@ -81,7 +77,6 @@ export default function RendezVousScreen() {
     }
   };
 
-  // Récupérer les détails du coach
   useEffect(() => {
     if (coachId) {
       fetchCoachDetails(coachId as string);

@@ -11,7 +11,7 @@ import {
   FlatList,
   ActivityIndicator 
 } from 'react-native';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { useRouter } from 'expo-router';
 
@@ -46,27 +46,55 @@ export default function CoachScreen() {
         const querySnapshot = await getDocs(q);
         
         const coachesData: Coach[] = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Réinitialiser à minuit pour comparer les dates uniquement
         
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Adapter les champs selon votre structure de données
-          coachesData.push({
-            id: doc.id,
+        // Récupérer d'abord tous les coachs
+        const coachesPromises = querySnapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+          const coachId = docSnapshot.id;
+          
+          // Vérifier si le coach a des disponibilités
+          const disponibiliteRef = collection(db, "disponibilite");
+          const disponibiliteQuery = query(
+            disponibiliteRef,
+            where("coach", "==", doc(db, "utilisateurs", coachId))
+          );
+          
+          const disponibiliteSnapshot = await getDocs(disponibiliteQuery);
+          let isAvailable = false;
+          
+          // Parcourir toutes les disponibilités du coach
+          disponibiliteSnapshot.forEach((dispoDoc) => {
+            const dispoData = dispoDoc.data();
+            const dispoDate = dispoData.dates.toDate();
+            
+            // Vérifier si la date de disponibilité est aujourd'hui ou dans le futur
+            if (dispoDate >= today && dispoData.dispo && dispoData.dispo.length > 0) {
+              isAvailable = true;
+            }
+          });
+          
+          return {
+            id: coachId,
             name: data.nomComplet || data.name || "Coach sans nom",
             speciality: data.specialite || "Général",
             experience: data.experience || 1,
             rating: data.rating || 5,
-            image: data.photoURL || data.urlAvatar || data.image || "https://via.placeholder.com/150", // Check photoURL first
+            image: data.photoURL || data.urlAvatar || data.image || "https://via.placeholder.com/150",
             description: data.description || "Aucune description disponible",
-            availability: data.disponibilite !== undefined ? data.disponibilite : true,
+            availability: isAvailable, // Disponibilité basée sur les créneaux horaires disponibles
             email: data.email,
-            prix: data.prix || 50, // Prix par défaut si non spécifié
-            sessionPrice: data.sessionPrice || "50" // Récupération du sessionPrice
-          });
+            prix: data.prix || 50,
+            sessionPrice: data.sessionPrice || "50"
+          };
         });
         
-        setCoaches(coachesData);
+        // Attendre que toutes les promesses soient résolues
+        const resolvedCoaches = await Promise.all(coachesPromises);
+        setCoaches(resolvedCoaches);
         setLoading(false);
+        
       } catch (err) {
         console.error("Erreur lors de la récupération des coachs:", err);
         setError('Impossible de charger les coachs');
