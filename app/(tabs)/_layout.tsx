@@ -117,20 +117,19 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen
           name="home"
           options={{
-            title: "Séances",
+            title: "Acceuil",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="seance"
           options={{
-            title: "Séances",
+            title: "Acceuil",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
           }}
         />
         
         
-        {/* Hidden screens */}
         <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
@@ -141,7 +140,6 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
         <Tabs.Screen name="profiladmin" options={{ href: null }} />
-        <Tabs.Screen name="planning" options={{ href: null }} />
         <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
