@@ -249,7 +249,7 @@ export default function AdminDashboard() {
       
       usersSnapshot.forEach((doc) => {
         const userData = doc.data();
-        if (userData.role === 'client') {
+        if (userData.role === 'utilisateur') {
           users++;
         } else if (userData.role === 'coach') {
           coaches++;
