@@ -1,9 +1,391 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../../firebase/firebaseConfig';
+import { collection, query, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
+import { styles as baseStyles } from '@/style/profil/profilStyles';
+
+const styles = {
+  ...baseStyles,
+  content: {
+    padding: 16,
+    flex: 1,
+  },
+  header: {
+    backgroundColor: '#FF6A88',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+  headerTitle: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: 'bold' as const,
+  },
+  statsContainer: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    marginBottom: 20,
+  },
+  statCard: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center' as const,
+    width: '30%' as any,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: '#FF6A88',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  quickAccessContainer: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    marginBottom: 20,
+    flexWrap: 'wrap' as const,
+  },
+  quickAccessButton: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    width: '30%' as any,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  quickAccessText: {
+    marginTop: 8,
+    fontSize: 12,
+    textAlign: 'center' as const,
+    color: '#333',
+  },
+  activityFeed: {
+    marginBottom: 20,
+  },
+  activityItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  activityDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FF6A88',
+    marginRight: 10,
+  },
+  activityText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  viewAllButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 10,
+    marginTop: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+  },
+  viewAllText: {
+    color: '#FF6A88',
+    marginRight: 5,
+    fontWeight: '500' as '500',
+    fontSize: 15,
+  },
+  dbLocationText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  databaseLocationBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 16,
+  },
+  logsContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  logIconContainer: {
+    marginRight: 12,
+    paddingTop: 2,
+  },
+  logContent: {
+    flex: 1,
+  },
+  logMessage: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  logTime: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  errorText: {
+    color: '#FF4040',
+    fontWeight: '500' as '500',
+  },
+  warningText: {
+    color: '#FFA500',
+    fontWeight: '500' as '500',
+  },
+  infoText: {
+    color: '#3498db',
+  },
+  emptyText: {
+    textAlign: 'center' as const,
+    color: '#999',
+    padding: 20,
+    fontStyle: 'italic' as const,
+  },
+};
 
 export default function AdminDashboard() {
+  // Interface pour définir le type des logs
+  interface LogEntry {
+    type: string;
+    message: string;
+    timestamp: string;
+    id: string;
+  }
+  
+  // Interface pour définir le type des activités
+  interface Activity {
+    id: string;
+    type: string;
+    user?: string;
+    email?: string;
+    timestamp: any;
+  }
+
+  // États pour stocker les données
+  const [databaseLogs, setDatabaseLogs] = useState<LogEntry[]>([]);
+  const [userCount, setUserCount] = useState(0);
+  const [coachCount, setCoachCount] = useState(0);
+  const [sessionCount, setSessionCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+
+  // Fonction pour obtenir l'icône correspondant au type de log
+  const getLogIcon = (type: string) => {
+    switch (type) {
+      case 'error':
+        return <Ionicons name="alert-circle" size={18} color="#FF4040" />;
+      case 'warning':
+        return <Ionicons name="warning" size={18} color="#FFA500" />;
+      case 'info':
+      default:
+        return <Ionicons name="information-circle" size={18} color="#3498db" />;
+    }
+  };
+  
+  // Fonction pour formater la date
+  const formatDate = (timestamp: string | number | Date | any) => {
+    if (!timestamp) return '';
+    
+    try {
+      const date = typeof timestamp === 'object' && 'toDate' in timestamp ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('fr-FR') + ' - ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+    } catch (error) {
+      console.error("Erreur de formatage de date:", error);
+      return 'Date inconnue';
+    }
+  };
+
+  // Fonction pour récupérer les statistiques
+  const fetchStats = async () => {
+    try {
+      // Compter les utilisateurs par rôle
+      const usersRef = collection(db, 'utilisateurs');
+      const usersSnapshot = await getDocs(usersRef);
+      
+      let users = 0;
+      let coaches = 0;
+      
+      usersSnapshot.forEach((doc) => {
+        const userData = doc.data();
+        if (userData.role === 'client') {
+          users++;
+        } else if (userData.role === 'coach') {
+          coaches++;
+        }
+      });
+      
+      setUserCount(users);
+      setCoachCount(coaches);
+      
+      // Compter les séances
+      const sessionRef = collection(db, 'programme');
+      const sessionSnapshot = await getDocs(sessionRef);
+      setSessionCount(sessionSnapshot.size);
+      
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des statistiques:", error);
+      // Ajouter l'erreur aux logs
+      setDatabaseLogs(prevLogs => [
+        {
+          type: 'error',
+          message: `Erreur de récupération des stats: ${error.message}`,
+          timestamp: formatDate(new Date()),
+          id: 'error-stats'
+        },
+        ...prevLogs
+      ]);
+    }
+  };
+
+  // Fonction pour récupérer les activités récentes et les logs
+  const fetchActivities = async () => {
+    try {
+      // Récupérer les dernières connexions utilisateurs
+      const usersRef = collection(db, 'utilisateurs');
+      const usersQuery = query(usersRef, orderBy('derniereConnexion', 'desc'), limit(10));
+      const usersSnapshot = await getDocs(usersQuery);
+      
+      const activities = usersSnapshot.docs.map(doc => {
+        const userData = doc.data();
+        return {
+          id: doc.id,
+          type: 'connection',
+          user: userData.nomComplet || userData.email,
+          timestamp: userData.derniereConnexion,
+          email: userData.email
+        };
+      });
+      
+      setRecentActivities(activities);
+      
+      // Générer des logs à partir des activités
+      
+      // Logs d'activité de connexion
+      const logs: LogEntry[] = [];
+      activities.slice(0, 5).forEach(activity => {
+        logs.push({
+          type: 'info',
+          message: `Dernière connexion: ${activity.user || activity.email}`,
+          timestamp: formatDate(activity.timestamp),
+          id: `login-${activity.id}`
+        });
+      });
+      
+      // Récupérer les modifications récentes
+      const modifiedUsersQuery = query(usersRef, orderBy('dateModification', 'desc'), limit(5));
+      const modifiedUsersSnapshot = await getDocs(modifiedUsersQuery);
+      
+      modifiedUsersSnapshot.docs.forEach(doc => {
+        const userData = doc.data();
+        logs.push({
+          type: 'warning',
+          message: `Profil modifié: ${userData.nomComplet || userData.email}`,
+          timestamp: formatDate(userData.dateModification),
+          id: `modified-${doc.id}`
+        });
+      });
+      
+      // Trier les logs par date
+      logs.sort((a, b) => {
+        const dateA = new Date(a.timestamp);
+        const dateB = new Date(b.timestamp);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      setDatabaseLogs(logs);
+      
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des activités:", error);
+      setDatabaseLogs([{
+        type: 'error',
+        message: `Erreur de récupération des activités: ${error.message}`,
+        timestamp: formatDate(new Date()),
+        id: 'error-activities'
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Charger les données au chargement du composant
+  useEffect(() => {
+    fetchStats();
+    fetchActivities();
+    
+    // Mettre en place un écouteur pour les changements dans la collection utilisateurs
+    const usersRef = collection(db, 'utilisateurs');
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          // Nouvel utilisateur ajouté
+          setDatabaseLogs(prevLogs => [{
+            type: 'info',
+            message: `Nouvel utilisateur: ${change.doc.data().nomComplet || change.doc.data().email}`,
+            timestamp: formatDate(new Date()),
+            id: `new-${change.doc.id}`
+          }, ...prevLogs]);
+        }
+        if (change.type === "modified") {
+          // Utilisateur modifié
+          setDatabaseLogs(prevLogs => [{
+            type: 'warning',
+            message: `Utilisateur modifié: ${change.doc.data().nomComplet || change.doc.data().email}`,
+            timestamp: formatDate(new Date()),
+            id: `mod-${change.doc.id}`
+          }, ...prevLogs]);
+        }
+      });
+      
+      // Mettre à jour les comptes
+      fetchStats();
+    });
+    
+    // Nettoyer l'écouteur
+    return () => unsubscribe();
+  }, []);
+  
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
@@ -15,17 +397,17 @@ export default function AdminDashboard() {
       <ScrollView style={styles.content}>
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>35</Text>
+            <Text style={styles.statNumber}>{userCount}</Text>
             <Text style={styles.statLabel}>Utilisateurs</Text>
           </View>
           
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statNumber}>{coachCount}</Text>
             <Text style={styles.statLabel}>Coachs</Text>
           </View>
           
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>86</Text>
+            <Text style={styles.statNumber}>{sessionCount}</Text>
             <Text style={styles.statLabel}>Séances</Text>
           </View>
         </View>
@@ -52,131 +434,66 @@ export default function AdminDashboard() {
         <Text style={styles.sectionTitle}>Activité récente</Text>
         
         <View style={styles.activityFeed}>
-          <View style={styles.activityItem}>
-            <View style={styles.activityDot} />
-            <View>
-              <Text style={styles.activityText}>Nouveau coach ajouté</Text>
-              <Text style={styles.activityTime}>Il y a 2 heures</Text>
+          {recentActivities.slice(0, 3).map((activity, index) => (
+            <View key={index} style={styles.activityItem}>
+              <View style={styles.activityDot} />
+              <View>
+                <Text style={styles.activityText}>
+                  {activity.user || activity.email}
+                </Text>
+                <Text style={styles.activityTime}>
+                  {formatDate(activity.timestamp)}
+                </Text>
+              </View>
             </View>
-          </View>
+          ))}
           
-          <View style={styles.activityItem}>
-            <View style={styles.activityDot} />
-            <View>
-              <Text style={styles.activityText}>5 nouveaux utilisateurs inscrits</Text>
-              <Text style={styles.activityTime}>Il y a 3 heures</Text>
-            </View>
-          </View>
+          {recentActivities.length === 0 && !loading && (
+            <Text style={styles.emptyText}>Aucune activité récente</Text>
+          )}
           
-          <View style={styles.activityItem}>
-            <View style={styles.activityDot} />
-            <View>
-              <Text style={styles.activityText}>Mise à jour du système</Text>
-              <Text style={styles.activityTime}>Il y a 1 jour</Text>
-            </View>
-          </View>
+          {loading && (
+            <ActivityIndicator size="small" color="#FF6A88" />
+          )}
+        </View>
+        
+        <Text style={styles.sectionTitle}>Logs de la base de données</Text>
+        
+        <View style={styles.logsContainer}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#FF6A88" />
+          ) : (
+            <>
+              {databaseLogs.length === 0 ? (
+                <Text style={styles.emptyText}>Aucun log disponible</Text>
+              ) : (
+                databaseLogs.map((log, index) => (
+                  <View key={log.id || index} style={styles.logItem}>
+                    <View style={styles.logIconContainer}>
+                      {getLogIcon(log.type)}
+                    </View>
+                    <View style={styles.logContent}>
+                      <Text style={[
+                        styles.logMessage,
+                        log.type === 'error' ? styles.errorText : 
+                        log.type === 'warning' ? styles.warningText : styles.infoText
+                      ]}>
+                        {log.message}
+                      </Text>
+                      <Text style={styles.logTime}>{log.timestamp}</Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            
+              <TouchableOpacity style={styles.viewAllButton}>
+                <Text style={styles.viewAllText}>Voir tous les logs</Text>
+                <Ionicons name="chevron-forward" size={16} color="#FF6A88" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FF6A88',
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  statCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    width: '30%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF6A88',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  quickAccessContainer: {
-    marginBottom: 24,
-  },
-  quickAccessButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  quickAccessText: {
-    fontSize: 16,
-    marginLeft: 12,
-    color: '#333',
-  },
-  activityFeed: {
-    marginBottom: 20,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  activityDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FF6A88',
-    marginRight: 12,
-  },
-  activityText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  activityTime: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-  },
-});
