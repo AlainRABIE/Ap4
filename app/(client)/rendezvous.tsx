@@ -32,6 +32,7 @@ interface Availability {
   dispo: number; // Modifié pour correspondre au nouveau format (0=indisponible, 1=disponible)
   horaire?: string; // L'heure du créneau
   horaires?: string[]; // Tableau des heures disponibles pour une date
+  docIds?: { [horaire: string]: string }; // IDs des documents par horaire
 }
 
 interface User {
@@ -156,12 +157,14 @@ export default function RendezVousScreen() {
             coach: data.coach.path.split('/').pop(),
             dates: data.dates,
             dispo: 1,
-            horaires: [horaire] // Tableau des heures disponibles pour cette date
+            horaires: [horaire], // Tableau des heures disponibles pour cette date
+            docIds: {[horaire]: docSnapshot.id} // IMPORTANT: Stocker les IDs des documents par horaire
           });
         } else {
           // Ajouter cet horaire à la date existante
           const existingData = availabilityByDate.get(dateStr);
           existingData.horaires.push(horaire);
+          existingData.docIds = {...existingData.docIds, [horaire]: docSnapshot.id}; // Ajouter le document ID pour cet horaire
           availabilityByDate.set(dateStr, existingData);
         }
       });
@@ -227,11 +230,19 @@ export default function RendezVousScreen() {
       }
 
       // Identifier le document précis du créneau horaire sélectionné
-      const dateStr = selectedAvailability.dates.toDate().toISOString().split('T')[0];
-      const docId = `${coachId}_${dateStr}_${selectedTime}`;
+      const dateObj = selectedAvailability.dates.toDate();
+      const dateStr = dateObj.toISOString().split('T')[0]; // Format YYYY-MM-DD
+      const docId = selectedAvailability.docIds?.[selectedTime];
+
+      if (!docId) {
+        console.error(`Document ID introuvable pour l'horaire: ${selectedTime}`);
+        throw new Error("Créneau horaire introuvable dans la base de données");
+      }
+      
+      console.log(`Mise à jour du créneau: ${docId} à dispo=0`);
       
       // Créer le rendez-vous dans Firestore
-      await addDoc(collection(db, 'rendezvous'), {
+      const rdvRef = await addDoc(collection(db, 'rendezvous'), {
         coach: doc(db, 'utilisateurs', coachId as string),
         client: doc(db, 'utilisateurs', currentUser.id),
         date: selectedAvailability.dates,
@@ -240,13 +251,46 @@ export default function RendezVousScreen() {
         dateCreation: Timestamp.now()
       });
       
-      // Mettre à jour ce créneau horaire spécifique à dispo = 0 (indisponible)
-      await setDoc(doc(db, 'disponibilite', docId), {
-        coach: doc(db, 'utilisateurs', coachId as string),
-        dates: selectedAvailability.dates,
-        dispo: 0, // Marquer comme indisponible
-        horaire: selectedTime
+      console.log(`Rendez-vous créé avec ID: ${rdvRef.id}`);
+      
+      // IMPORTANT: Mettre à jour ce créneau horaire spécifique à dispo = 0 (indisponible)
+      const dispoRef = doc(db, 'disponibilite', docId);
+
+      // Vérifier si le document existe et le mettre à jour
+      const dispoDoc = await getDoc(dispoRef);
+      if (dispoDoc.exists()) {
+        await setDoc(dispoRef, {
+          coach: doc(db, 'utilisateurs', coachId as string),
+          dates: selectedAvailability.dates,
+          dispo: 0, // Marquer comme indisponible
+          horaire: selectedTime
+        }, { merge: true }); // Utiliser merge:true pour s'assurer que la mise à jour fonctionne
+        console.log(`Document existant mis à jour avec dispo=0`);
+      } else {
+        console.error(`Document non trouvé: ${docId}`);
+        throw new Error("Créneau horaire introuvable dans la base de données");
+      }
+      
+      // Mettre à jour la liste des disponibilités après la réservation (interface utilisateur)
+      const updatedAvailabilities = availabilities.map(availability => {
+        if (formatDate(availability.dates.toDate()) === selectedDate) {
+          // Filtrer le créneau horaire réservé de la liste des horaires disponibles
+          const updatedHoraires = availability.horaires?.filter(horaire => horaire !== selectedTime) || [];
+          return {
+            ...availability,
+            horaires: updatedHoraires
+          };
+        }
+        return availability;
       });
+      
+      // Filtrer les dates qui n'ont plus d'horaires disponibles
+      const filteredAvailabilities = updatedAvailabilities.filter(
+        availability => availability.horaires && availability.horaires.length > 0
+      );
+      
+      setAvailabilities(filteredAvailabilities);
+      setSelectedTime(null);
       
       Alert.alert(
         'Succès',
