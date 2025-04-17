@@ -129,6 +129,7 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
+        <Tabs.Screen name="profiladmin" options={{ href: null }} />
         <Tabs.Screen name="planning" options={{ href: null }} />
         <Tabs.Screen name="client" options={{ href: null }} />
         <Tabs.Screen name="admin" options={{ href: null }} />
@@ -186,6 +187,7 @@ function MyTabs({ userRole }: { userRole: string | null }) {
       <Tabs.Screen name="planning" options={{ href: null }} />
       <Tabs.Screen name="client" options={{ href: null }} />
       <Tabs.Screen name="profilcoach" options={{ href: null }} />
+      <Tabs.Screen name="profiladmin" options={{ href: null }} />
       <Tabs.Screen name="programmeclient" options={{ href: null }} />
       <Tabs.Screen name="seance" options={{ href: null }} />
       <Tabs.Screen name="admin" options={{ href: null }} />
