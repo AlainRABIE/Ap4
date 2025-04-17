@@ -26,6 +26,7 @@ interface Coach {
   availability: boolean;
   email?: string; // Optionnel, si disponible dans vos données
   prix: number; // Prix par séance - renamed from price to prix to match your Firestore field
+  sessionPrice: string; // Ajout du champ sessionPrice
 }
 
 export default function CoachScreen() {
@@ -59,7 +60,8 @@ export default function CoachScreen() {
             description: data.description || "Aucune description disponible",
             availability: data.disponibilite !== undefined ? data.disponibilite : true,
             email: data.email,
-            prix: data.prix || 50 // Prix par défaut si non spécifié
+            prix: data.prix || 50, // Prix par défaut si non spécifié
+            sessionPrice: data.sessionPrice || "50" // Récupération du sessionPrice
           });
         });
         
@@ -205,7 +207,7 @@ export default function CoachScreen() {
                   {item.experience} ans d'expérience
                 </Text>
                 <Text style={styles.priceText}>
-                  {item.prix}€ / séance
+                  {item.sessionPrice}€ / séance
                 </Text>
               </View>
               
