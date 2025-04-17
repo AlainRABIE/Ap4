@@ -1,19 +1,14 @@
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
-import { UserType } from "./UserContext"; // Now correctly imported
 
 export class ProfileService {
   private db = getFirestore();
   private auth = getAuth();
 
   async updateUserField(
-    userId: string, 
-    fieldName: keyof UserType, 
-    newValue: string
-  ): Promise<void> {
+userId: string, fieldName: string, newValue: string  ): Promise<void> {
     try {
       const userRef = doc(this.db, "utilisateurs", userId);
-      await updateDoc(userRef, { [fieldName]: newValue });
     } catch (error) {
       console.error("Erreur lors de la mise à jour :", error);
       throw error;

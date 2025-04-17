@@ -44,7 +44,7 @@ export default function AdminProfile() {
           setUserData({
             name: data.name || user.displayName || 'Admin',
             email: user.email || 'Non renseigné',
-            role: data.role || 'admin',
+            role: data.role || 'non',
             createdAt: user.metadata.creationTime || 'Non disponible',
             lastLogin: user.metadata.lastSignInTime || 'Non disponible',
             photoURL: user.photoURL || 'https://www.gravatar.com/avatar/?d=mp',
@@ -275,6 +275,13 @@ export default function AdminProfile() {
           >
             <Ionicons name="people-outline" size={22} color="#FFF" />
             <Text style={styles.actionButtonText}>Gestion des utilisateurs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push('/coach')}
+          >
+            <Ionicons name="barbell-outline" size={22} color="#FFF" />
+            <Text style={styles.actionButtonText}>Gestion des coachs</Text>
           </TouchableOpacity>
         </View>
         

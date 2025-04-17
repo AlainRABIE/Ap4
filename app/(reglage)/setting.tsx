@@ -15,10 +15,8 @@ export default function Settings() {
     checkPedometerPermission();
   }, []);
 
-  // Fonction pour envoyer un email de demande pour devenir coach
   const sendCoachRequest = async () => {
     try {
-      // Récupération des informations de l'utilisateur connecté
       const user = auth.currentUser;
       
       if (!user) {

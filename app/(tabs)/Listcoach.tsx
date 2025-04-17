@@ -11,7 +11,7 @@ import {
   Image
 } from 'react-native';
 import { collection, getDocs, query, where, updateDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../../firebase/firebaseConfig';
+import { db } from '../../firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 
 interface Coach {

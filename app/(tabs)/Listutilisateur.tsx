@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-import { db } from '../../../firebase/firebaseConfig';
+import { db } from '../../firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
