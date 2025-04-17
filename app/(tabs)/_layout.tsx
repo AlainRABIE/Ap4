@@ -131,9 +131,12 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         
         
         {/* Hidden screens */}
+        <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="Listclient" options={{ href: null }} />
+        <Tabs.Screen name="Listcoach" options={{ href: null }} />
+        <Tabs.Screen name="Listutilisateur" options={{ href: null }} />
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
@@ -154,24 +157,10 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         }}
       />
       <Tabs.Screen
-        name="coach"
-        options={{
-          title: "Coach",
-          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="body-outline" size={size} color={color} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="home"
         options={{
           title: "Accueil",
           tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chrono"
-        options={{
-          title: "Chrono",
-          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="timer-outline" size={size} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -188,9 +177,19 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="coach"
+        options={{
+          title: "Coach",
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
+        }}
+      />
 
       <Tabs.Screen name="planning" options={{ href: null }} />
       <Tabs.Screen name="client" options={{ href: null }} />
+      <Tabs.Screen name="admin" options={{ href: null }} />
+      <Tabs.Screen name="Listcoach" options={{ href: null }} />
+      <Tabs.Screen name="Listutilisateur" options={{ href: null }} />
       <Tabs.Screen name="profilcoach" options={{ href: null }} />
       <Tabs.Screen name="profiladmin" options={{ href: null }} />
       <Tabs.Screen name="programmeclient" options={{ href: null }} />
