@@ -29,7 +29,9 @@ interface Availability {
   id: string;
   coach: string;
   dates: Timestamp;
-  dispo: string[];
+  dispo: number; // Modifié pour correspondre au nouveau format (0=indisponible, 1=disponible)
+  horaire?: string; // L'heure du créneau
+  horaires?: string[]; // Tableau des heures disponibles pour une date
 }
 
 interface User {
@@ -111,7 +113,11 @@ export default function RendezVousScreen() {
       setLoading(true);
       
       const availabilityRef = collection(db, 'disponibilite');
-      const q = query(availabilityRef, where('coach', '==', doc(db, 'utilisateurs', coachId)));
+      const q = query(
+        availabilityRef, 
+        where('coach', '==', doc(db, 'utilisateurs', coachId)),
+        where('dispo', '==', 1) // Récupérer uniquement les créneaux disponibles (dispo=1)
+      );
       
       const querySnapshot = await getDocs(q);
       
@@ -121,19 +127,48 @@ export default function RendezVousScreen() {
         return;
       }
       
-      const availabilityData: Availability[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        availabilityData.push({
-          id: doc.id,
-          coach: data.coach.path.split('/').pop(), // Extraire l'ID du coach de la référence
-          dates: data.dates,
-          dispo: data.dispo || []
-        });
+      // Organiser les disponibilités par date
+      const availabilityByDate = new Map();
+      
+      querySnapshot.forEach((docSnapshot) => {
+        const data = docSnapshot.data();
+        const dateObj = data.dates.toDate();
+        const dateStr = dateObj.toISOString().split('T')[0]; // Format YYYY-MM-DD
+        
+        // Extraire l'heure du document ID (format: userId_YYYY-MM-DD_HH:00)
+        const docId = docSnapshot.id;
+        const horaireParts = docId.split('_');
+        let horaire = '';
+        
+        if (horaireParts.length >= 3) {
+          horaire = horaireParts[horaireParts.length - 1];
+        }
+        
+        // Si pas d'horaire dans l'ID, utiliser celui du document s'il existe
+        if (!horaire && data.horaire) {
+          horaire = data.horaire;
+        }
+        
+        if (!availabilityByDate.has(dateStr)) {
+          // Créer une nouvelle entrée pour cette date
+          availabilityByDate.set(dateStr, {
+            id: dateStr, // Utiliser la date comme ID
+            coach: data.coach.path.split('/').pop(),
+            dates: data.dates,
+            dispo: 1,
+            horaires: [horaire] // Tableau des heures disponibles pour cette date
+          });
+        } else {
+          // Ajouter cet horaire à la date existante
+          const existingData = availabilityByDate.get(dateStr);
+          existingData.horaires.push(horaire);
+          availabilityByDate.set(dateStr, existingData);
+        }
       });
       
-      // Trier par date
-      availabilityData.sort((a, b) => a.dates.seconds - b.dates.seconds);
+      // Convertir la Map en tableau et trier par date
+      const availabilityData = Array.from(availabilityByDate.values())
+        .sort((a, b) => a.dates.seconds - b.dates.seconds);
       
       setAvailabilities(availabilityData);
       
@@ -190,6 +225,10 @@ export default function RendezVousScreen() {
       if (!selectedAvailability) {
         throw new Error("Disponibilité non trouvée");
       }
+
+      // Identifier le document précis du créneau horaire sélectionné
+      const dateStr = selectedAvailability.dates.toDate().toISOString().split('T')[0];
+      const docId = `${coachId}_${dateStr}_${selectedTime}`;
       
       // Créer le rendez-vous dans Firestore
       await addDoc(collection(db, 'rendezvous'), {
@@ -201,13 +240,12 @@ export default function RendezVousScreen() {
         dateCreation: Timestamp.now()
       });
       
-      // Mettre à jour la disponibilité du coach (supprimer l'horaire réservé)
-      const updatedDispo = selectedAvailability.dispo.filter(time => time !== selectedTime);
-      
-      await setDoc(doc(db, 'disponibilite', selectedAvailability.id), {
+      // Mettre à jour ce créneau horaire spécifique à dispo = 0 (indisponible)
+      await setDoc(doc(db, 'disponibilite', docId), {
         coach: doc(db, 'utilisateurs', coachId as string),
         dates: selectedAvailability.dates,
-        dispo: updatedDispo
+        dispo: 0, // Marquer comme indisponible
+        horaire: selectedTime
       });
       
       Alert.alert(
@@ -321,7 +359,7 @@ export default function RendezVousScreen() {
                   styles.availabilityCount,
                   isDateSelected(formattedDate) && styles.selectedDateText
                 ]}>
-                  {availability.dispo.length} créneau{availability.dispo.length > 1 ? 'x' : ''}
+                  {availability.horaires ? `${availability.horaires.length} créneau${availability.horaires.length > 1 ? 'x' : ''}` : 'Disponible'}
                 </Text>
               </TouchableOpacity>
             );
@@ -341,29 +379,26 @@ export default function RendezVousScreen() {
               avail => formatDate(avail.dates.toDate()) === selectedDate
             );
             
-            if (!selectedAvailability || selectedAvailability.dispo.length === 0) {
+            if (!selectedAvailability || selectedAvailability.dispo === 0) {
               return <Text style={styles.noDataText}>Aucun horaire disponible pour cette date</Text>;
             }
             
-            // Trier les horaires
-            const sortedTimes = [...selectedAvailability.dispo].sort();
-            
             return (
               <View style={styles.timeGrid}>
-                {sortedTimes.map((time) => (
+                {selectedAvailability.horaires && selectedAvailability.horaires.map((horaire) => (
                   <TouchableOpacity
-                    key={time}
+                    key={horaire}
                     style={[
                       styles.timeCard,
-                      isTimeSelected(time) && styles.selectedTimeCard
+                      isTimeSelected(horaire) && styles.selectedTimeCard
                     ]}
-                    onPress={() => setSelectedTime(time)}
+                    onPress={() => setSelectedTime(horaire)}
                   >
                     <Text style={[
                       styles.timeText,
-                      isTimeSelected(time) && styles.selectedTimeText
+                      isTimeSelected(horaire) && styles.selectedTimeText
                     ]}>
-                      {time}
+                      {horaire}
                     </Text>
                   </TouchableOpacity>
                 ))}

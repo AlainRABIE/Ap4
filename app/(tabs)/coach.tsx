@@ -49,31 +49,28 @@ export default function CoachScreen() {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Réinitialiser à minuit pour comparer les dates uniquement
         
-        // Récupérer d'abord tous les coachs
+        // Récupérer tous les coachs et leurs disponibilités
         const coachesPromises = querySnapshot.docs.map(async (docSnapshot) => {
           const data = docSnapshot.data();
           const coachId = docSnapshot.id;
           
-          // Vérifier si le coach a des disponibilités
+          // Rechercher des disponibilités pour ce coach spécifiquement avec dispo=1
           const disponibiliteRef = collection(db, "disponibilite");
           const disponibiliteQuery = query(
             disponibiliteRef,
-            where("coach", "==", doc(db, "utilisateurs", coachId))
+            where("coach", "==", doc(db, "utilisateurs", coachId)),
+            where("dispo", "==", 1) // Uniquement les créneaux disponibles
           );
           
           const disponibiliteSnapshot = await getDocs(disponibiliteQuery);
           let isAvailable = false;
           
-          // Parcourir toutes les disponibilités du coach
-          disponibiliteSnapshot.forEach((dispoDoc) => {
-            const dispoData = dispoDoc.data();
-            const dispoDate = dispoData.dates.toDate();
-            
-            // Vérifier si la date de disponibilité est aujourd'hui ou dans le futur
-            if (dispoDate >= today && dispoData.dispo && dispoData.dispo.length > 0) {
-              isAvailable = true;
-            }
-          });
+          // Un coach est disponible s'il a au moins un créneau disponible
+          if (!disponibiliteSnapshot.empty) {
+            isAvailable = true;
+          }
+          
+          console.log(`Coach ${coachId} disponibilité:`, isAvailable);
           
           return {
             id: coachId,
@@ -83,7 +80,7 @@ export default function CoachScreen() {
             rating: data.rating || 5,
             image: data.photoURL || data.urlAvatar || data.image || "https://via.placeholder.com/150",
             description: data.description || "Aucune description disponible",
-            availability: isAvailable, // Disponibilité basée sur les créneaux horaires disponibles
+            availability: isAvailable, // Disponibilité basée sur la présence d'au moins un créneau avec dispo=1
             email: data.email,
             prix: data.prix || 50,
             sessionPrice: data.sessionPrice || "50"
@@ -105,15 +102,12 @@ export default function CoachScreen() {
     fetchCoaches();
   }, []);
   
-  // Liste des spécialités uniques pour le filtre
   const specialities = [...new Set(coaches.map(coach => coach.speciality))];
 
-  // Filtrer les coachs par spécialité
   const filteredCoaches = specialityFilter
     ? coaches.filter(coach => coach.speciality === specialityFilter)
     : coaches;
 
-  // Afficher les étoiles selon la notation
   const renderStars = (rating: number) => {
     return (
       <View style={styles.starsContainer}>
@@ -160,7 +154,6 @@ export default function CoachScreen() {
         <Text style={styles.headerTitle}>Nos Coachs Professionnels</Text>
       </View>
       
-      {/* Filtres de spécialité */}
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false} 
@@ -197,7 +190,6 @@ export default function CoachScreen() {
         ))}
       </ScrollView>
       
-      {/* Liste des coachs */}
       <FlatList
         data={filteredCoaches}
         keyExtractor={(item) => item.id.toString()}
@@ -208,7 +200,7 @@ export default function CoachScreen() {
               <Image
                 source={{ uri: item.image }}
                 style={styles.coachImage}
-                defaultSource={require('../../assets/images/default-avatar.png')} // Assurez-vous que ce fichier existe
+                defaultSource={require('../../assets/images/default-avatar.png')} 
               />
               <View style={[
                 styles.availabilityBadge,
