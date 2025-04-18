@@ -128,6 +128,13 @@ function MyTabs({ userRole }: { userRole: string | null }) {
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
           }}
         />
+         <Tabs.Screen
+          name="rendezvouscoach"
+          options={{
+            title: "Rendez-vous",
+            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
+          }}
+        />
         
         
         <Tabs.Screen name="admin" options={{ href: null }} />
