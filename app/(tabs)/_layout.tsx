@@ -6,9 +6,9 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getUserData } from '../../services/auth';
 import app from '../../firebase/firebaseConfig';
 
-function TabBarIcon({ name, color, size, focused, iconType = "ionicon" }: { 
-  name: string; 
-  color: string; 
+function TabBarIcon({ name, color, size, focused, iconType = "ionicon" }: {
+  name: string;
+  color: string;
   size: number;
   focused: boolean;
   iconType?: "ionicon" | "material";
@@ -16,16 +16,16 @@ function TabBarIcon({ name, color, size, focused, iconType = "ionicon" }: {
   return (
     <View style={styles.iconContainer}>
       {iconType === "ionicon" ? (
-        <Ionicons 
-          name={name as any} 
+        <Ionicons
+          name={name as any}
           size={size}
-          color={color} 
+          color={color}
         />
       ) : (
-        <MaterialIcons 
-          name={name as any} 
+        <MaterialIcons
+          name={name as any}
           size={size}
-          color={color} 
+          color={color}
         />
       )}
       {focused && <View style={styles.indicatorBar} />}
@@ -75,14 +75,15 @@ function MyTabs({ userRole }: { userRole: string | null }) {
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
-         <Tabs.Screen
+        <Tabs.Screen
           name="profiladmin"
           options={{
             title: "Profil",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
-        
+        {/* Toutes mes pages cachée pour l'admin ducou^p */}        <Tabs.Screen name="admin" options={{ href: null }} />
+
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />
@@ -92,11 +93,13 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen name="profilcoach" options={{ href: null }} />
         <Tabs.Screen name="planning" options={{ href: null }} />
         <Tabs.Screen name="client" options={{ href: null }} />
+        <Tabs.Screen name="rdv" options={{ href: null }} />
+        <Tabs.Screen name="rendezvouscoach" options={{ href: null }} />
         <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
   }
-  
+
   else if (userRole === "coach") {
     return (
       <Tabs screenOptions={screenOptions} initialRouteName="profilcoach">
@@ -113,7 +116,7 @@ function MyTabs({ userRole }: { userRole: string | null }) {
             title: "Client",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
-        /> 
+        />
         <Tabs.Screen
           name="home"
           options={{
@@ -128,16 +131,15 @@ function MyTabs({ userRole }: { userRole: string | null }) {
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
           }}
         />
-         <Tabs.Screen
+        <Tabs.Screen
           name="rendezvouscoach"
           options={{
             title: "Rendez-vous",
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
           }}
         />
-        
-        
-        <Tabs.Screen name="admin" options={{ href: null }} />
+
+        {/* Toutes mes pages cachée pour le coach ducou^p */}        <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="Listclient" options={{ href: null }} />
@@ -147,6 +149,7 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
         <Tabs.Screen name="profiladmin" options={{ href: null }} />
+        <Tabs.Screen name="rdv" options={{ href: null }} />
         <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
@@ -189,9 +192,17 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
         }}
       />
+       <Tabs.Screen
+        name="rdv"
+        options={{
+          title: "Mes Rendez-vous",
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar" size={size} color={color} focused={focused} iconType="material" />,
+        }}
+      />
 
       <Tabs.Screen name="planning" options={{ href: null }} />
       <Tabs.Screen name="client" options={{ href: null }} />
+      <Tabs.Screen name="rendezvouscoach" options={{ href: null }} />
       <Tabs.Screen name="admin" options={{ href: null }} />
       <Tabs.Screen name="Listcoach" options={{ href: null }} />
       <Tabs.Screen name="Listutilisateur" options={{ href: null }} />
@@ -215,7 +226,7 @@ export default function TabsLayout() {
         if (user) {
           console.log("Utilisateur connecté:", user.uid);
           const userData = await getUserData(user.uid);
-          setUserRole(userData.role); 
+          setUserRole(userData.role);
         } else {
           console.log("Aucun utilisateur connecté");
           setUserRole(null);
@@ -258,8 +269,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6A88",
   },
   loadingContainer: {
-    flex: 1, 
-    justifyContent: 'center', 
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center'
   },
 });

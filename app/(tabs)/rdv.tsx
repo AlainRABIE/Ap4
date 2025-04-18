@@ -13,10 +13,11 @@ import {
   Image,
   Platform
 } from 'react-native';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 // Interface pour les données du rendez-vous
 interface Rendezvous {
@@ -24,24 +25,26 @@ interface Rendezvous {
   date: Timestamp;
   horaire: string;
   statut: string;
-  client: {
+  coach: {
     id: string;
     nomComplet?: string;
-    email?: string;
+    specialite?: string;
     photoURL?: string;
+    email?: string;
   };
   dateCreation: Timestamp;
   formattedDate?: string; // Pour l'affichage
 }
 
-export default function RendezvousCoachScreen() {
+export default function RendezvousClientScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [rendezvous, setRendezvous] = useState<Rendezvous[]>([]);
   const [filteredRendezvous, setFilteredRendezvous] = useState<Rendezvous[]>([]);
-  const [filter, setFilter] = useState('all'); // 'all', 'today', 'upcoming', 'past'
+  const [filter, setFilter] = useState('upcoming'); // 'all', 'upcoming', 'past', 'cancelled'
   const [error, setError] = useState<string | null>(null);
-  const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [expandedRdv, setExpandedRdv] = useState<string | null>(null);
+  const router = useRouter();
 
   // Charger les rendez-vous au chargement de la page
   useEffect(() => {
@@ -53,7 +56,7 @@ export default function RendezvousCoachScreen() {
     filterRendezvous();
   }, [filter, rendezvous]);
 
-  // Récupérer tous les rendez-vous du coach
+  // Récupérer tous les rendez-vous de l'utilisateur
   const fetchRendezvous = async () => {
     try {
       setLoading(true);
@@ -66,9 +69,9 @@ export default function RendezvousCoachScreen() {
         return;
       }
 
-      // Récupérer les rendez-vous où le coach est l'utilisateur actuel
+      // Récupérer les rendez-vous où le client est l'utilisateur actuel
       const rdvRef = collection(db, 'rendezvous');
-      const q = query(rdvRef, where('coach', '==', doc(db, 'utilisateurs', user.uid)));
+      const q = query(rdvRef, where('client', '==', doc(db, 'utilisateurs', user.uid)));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
@@ -79,29 +82,26 @@ export default function RendezvousCoachScreen() {
 
       const rdvPromises = querySnapshot.docs.map(async (rdvDoc) => {
         const rdvData = rdvDoc.data();
-        let clientData: any = { id: rdvData.client.id };
+        let coachData: any = { id: '' };
 
         try {
-          // Récupérer les informations du client
-          if (rdvData.client) {
-            const clientRef = rdvData.client;
-            const clientDoc = await getDoc(clientRef);
-            if (clientDoc.exists()) {
-              const clientDocData = clientDoc.data() as { 
-                nomComplet?: string; 
-                email?: string; 
-                photoURL?: string;
-              };
-              clientData = {
-                id: clientDoc.id,
-                nomComplet: clientDocData.nomComplet || 'Client',
-                email: clientDocData.email || 'Non renseigné',
-                photoURL: clientDocData.photoURL || null
+          // Récupérer les informations du coach
+          if (rdvData.coach) {
+            const coachRef = rdvData.coach;
+            const coachDoc = await getDoc(coachRef);
+            if (coachDoc.exists()) {
+              const coachDocData = coachDoc.data() as Record<string, any>;
+              coachData = {
+                id: coachDoc.id,
+                nomComplet: coachDocData.nomComplet || coachDocData.name || 'Coach',
+                specialite: coachDocData.specialite || coachDocData.speciality || 'Général',
+                photoURL: coachDocData.photoURL || coachDocData.image || null,
+                email: coachDocData.email || 'Non renseigné'
               };
             }
           }
         } catch (err) {
-          console.error("Erreur lors de la récupération des détails du client:", err);
+          console.error("Erreur lors de la récupération des détails du coach:", err);
         }
 
         // Formater la date pour l'affichage
@@ -113,7 +113,7 @@ export default function RendezvousCoachScreen() {
           date: rdvData.date,
           horaire: rdvData.horaire,
           statut: rdvData.statut || 'confirmé',
-          client: clientData,
+          coach: coachData,
           dateCreation: rdvData.dateCreation,
           formattedDate
         };
@@ -176,64 +176,25 @@ export default function RendezvousCoachScreen() {
     today.setHours(0, 0, 0, 0);
 
     switch (filter) {
-      case 'today':
-        setFilteredRendezvous(rendezvous.filter(rdv => {
-          const rdvDate = rdv.date.toDate();
-          rdvDate.setHours(0, 0, 0, 0);
-          return rdvDate.getTime() === today.getTime();
-        }));
-        break;
       case 'upcoming':
         setFilteredRendezvous(rendezvous.filter(rdv => {
           const rdvDate = rdv.date.toDate();
           rdvDate.setHours(0, 0, 0, 0);
-          return rdvDate.getTime() >= today.getTime();
+          return rdvDate.getTime() >= today.getTime() && rdv.statut !== 'annulé';
         }));
         break;
       case 'past':
         setFilteredRendezvous(rendezvous.filter(rdv => {
           const rdvDate = rdv.date.toDate();
           rdvDate.setHours(0, 0, 0, 0);
-          return rdvDate.getTime() < today.getTime();
+          return rdvDate.getTime() < today.getTime() && rdv.statut !== 'annulé';
         }));
+        break;
+      case 'cancelled':
+        setFilteredRendezvous(rendezvous.filter(rdv => rdv.statut === 'annulé'));
         break;
       default: // 'all'
         setFilteredRendezvous(rendezvous);
-    }
-  };
-
-  // Fonction pour changer le statut d'un rendez-vous
-  const updateRendezvousStatus = async (rdvId: string, newStatus: string) => {
-    try {
-      setLoading(true);
-      
-      await updateDoc(doc(db, 'rendezvous', rdvId), {
-        statut: newStatus
-      });
-      
-      // Mettre à jour l'état local
-      const updatedRdv = rendezvous.map(rdv => {
-        if (rdv.id === rdvId) {
-          return { ...rdv, statut: newStatus };
-        }
-        return rdv;
-      });
-      
-      setRendezvous(updatedRdv);
-      
-      Alert.alert(
-        'Succès',
-        `Le rendez-vous a été marqué comme ${newStatus}.`
-      );
-      
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour du statut:", err);
-      Alert.alert(
-        'Erreur',
-        "Impossible de mettre à jour le statut du rendez-vous."
-      );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -243,29 +204,13 @@ export default function RendezvousCoachScreen() {
     fetchRendezvous();
   };
 
-  // Afficher les détails d'un client
-  const toggleClientDetails = (clientId: string) => {
-    if (expandedClient === clientId) {
-      setExpandedClient(null);
+  // Afficher les détails d'un rendez-vous
+  const toggleRdvDetails = (rdvId: string) => {
+    if (expandedRdv === rdvId) {
+      setExpandedRdv(null);
     } else {
-      setExpandedClient(clientId);
+      setExpandedRdv(rdvId);
     }
-  };
-
-  // Vérifier si un rendez-vous est le premier de sa date
-  const isFirstRdvOfDate = (index: number): boolean => {
-    if (index === 0) return true;
-    
-    const currentRdv = filteredRendezvous[index];
-    const prevRdv = filteredRendezvous[index - 1];
-    
-    const currentDate = currentRdv.date.toDate();
-    const prevDate = prevRdv.date.toDate();
-    
-    currentDate.setHours(0, 0, 0, 0);
-    prevDate.setHours(0, 0, 0, 0);
-    
-    return currentDate.getTime() !== prevDate.getTime();
   };
 
   // Regrouper les rendez-vous par date
@@ -304,7 +249,7 @@ export default function RendezvousCoachScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mess Rendez-vous</Text>
+        <Text style={styles.headerTitle}>Mes Rendez-vous</Text>
       </View>
 
       {/* Filtres de rendez-vous */}
@@ -323,14 +268,6 @@ export default function RendezvousCoachScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'today' && styles.activeFilter]}
-          onPress={() => setFilter('today')}
-        >
-          <MaterialIcons name="today" size={18} color={filter === 'today' ? 'white' : '#64748B'} />
-          <Text style={[styles.filterText, filter === 'today' && styles.activeFilterText]}>Aujourd'hui</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.filterButton, filter === 'upcoming' && styles.activeFilter]}
           onPress={() => setFilter('upcoming')}
         >
@@ -345,7 +282,24 @@ export default function RendezvousCoachScreen() {
           <MaterialIcons name="history" size={18} color={filter === 'past' ? 'white' : '#64748B'} />
           <Text style={[styles.filterText, filter === 'past' && styles.activeFilterText]}>Passés</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterButton, filter === 'cancelled' && styles.activeFilter]}
+          onPress={() => setFilter('cancelled')}
+        >
+          <MaterialIcons name="cancel" size={18} color={filter === 'cancelled' ? 'white' : '#64748B'} />
+          <Text style={[styles.filterText, filter === 'cancelled' && styles.activeFilterText]}>Annulés</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Bouton pour prendre un nouveau rendez-vous */}
+      <TouchableOpacity 
+        style={styles.newAppointmentButton}
+        onPress={() => router.push('/coach')}
+      >
+        <MaterialIcons name="add-circle" size={20} color="white" />
+        <Text style={styles.newAppointmentText}>Prendre un nouveau rendez-vous</Text>
+      </TouchableOpacity>
 
       {/* Liste des rendez-vous */}
       <ScrollView 
@@ -359,8 +313,16 @@ export default function RendezvousCoachScreen() {
           <View style={styles.emptyContainer}>
             <FontAwesome5 name="calendar-times" size={48} color="#CBD5E1" />
             <Text style={styles.emptyText}>
-              Aucun rendez-vous {filter === 'today' ? "aujourd'hui" : filter === 'upcoming' ? "à venir" : filter === 'past' ? "passé" : ""}.
+              Aucusn rendez-vous {filter === 'upcoming' ? "à venir" : filter === 'past' ? "passé" : filter === 'cancelled' ? "annulé" : ""}.
             </Text>
+            {filter !== 'upcoming' && (
+              <TouchableOpacity 
+                style={styles.switchFilterButton}
+                onPress={() => setFilter('upcoming')}
+              >
+                <Text style={styles.switchFilterText}>Voir les rendez-vous à venir</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           Object.entries(groupedRendezvous).map(([date, rdvs]) => (
@@ -370,8 +332,13 @@ export default function RendezvousCoachScreen() {
                 <Text style={styles.dateHeaderText}>{date}</Text>
               </View>
               
-              {rdvs.map((rdv, index) => (
-                <View key={rdv.id} style={styles.appointmentCard}>
+              {rdvs.map((rdv) => (
+                <TouchableOpacity 
+                  key={rdv.id} 
+                  style={styles.appointmentCard}
+                  onPress={() => toggleRdvDetails(rdv.id)}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.appointmentHeader}>
                     <View style={styles.timeContainer}>
                       <MaterialIcons name="access-time" size={16} color="#64748B" />
@@ -391,63 +358,55 @@ export default function RendezvousCoachScreen() {
                     </View>
                   </View>
                   
-                  <TouchableOpacity 
-                    style={styles.clientContainer}
-                    onPress={() => toggleClientDetails(rdv.client.id)}
-                  >
+                  <View style={styles.coachContainer}>
                     <Image 
                       source={
-                        rdv.client.photoURL 
-                          ? { uri: rdv.client.photoURL } 
+                        rdv.coach.photoURL 
+                          ? { uri: rdv.coach.photoURL } 
                           : require('../../assets/images/default-avatar.png')
                       } 
-                      style={styles.clientAvatar}
+                      style={styles.coachAvatar}
                     />
                     
-                    <View style={styles.clientInfo}>
-                      <Text style={styles.clientName}>{rdv.client.nomComplet}</Text>
-                      <Text style={styles.clientEmail}>{rdv.client.email}</Text>
+                    <View style={styles.coachInfo}>
+                      <Text style={styles.coachName}>{rdv.coach.nomComplet}</Text>
+                      <Text style={styles.coachSpeciality}>{rdv.coach.specialite}</Text>
                     </View>
                     
                     <MaterialIcons 
-                      name={expandedClient === rdv.client.id ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                      name={expandedRdv === rdv.id ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
                       size={24} 
                       color="#64748B" 
                     />
-                  </TouchableOpacity>
+                  </View>
                   
-                  {expandedClient === rdv.client.id && (
+                  {expandedRdv === rdv.id && (
                     <View style={styles.expandedInfo}>
                       <Text style={styles.expandedInfoTitle}>Détails du rendez-vous</Text>
                       <Text style={styles.expandedInfoText}>Date: {rdv.formattedDate}</Text>
                       <Text style={styles.expandedInfoText}>Heure: {rdv.horaire}</Text>
                       <Text style={styles.expandedInfoText}>Statut: {rdv.statut}</Text>
+                      <Text style={styles.expandedInfoText}>Coach: {rdv.coach.nomComplet}</Text>
+                      <Text style={styles.expandedInfoText}>Spécialité: {rdv.coach.specialite}</Text>
                       <Text style={styles.expandedInfoText}>Réservé le: {rdv.dateCreation.toDate().toLocaleDateString('fr-FR')}</Text>
                       
-                      <View style={styles.actionsContainer}>
-                        {rdv.statut !== 'terminé' && (
+                      {rdv.statut === 'confirmé' && new Date() < rdv.date.toDate() && (
+                        <View style={styles.actionsContainer}>
                           <TouchableOpacity
-                            style={[styles.actionButton, styles.completeButton]}
-                            onPress={() => updateRendezvousStatus(rdv.id, 'terminé')}
-                          >
-                            <MaterialIcons name="check-circle" size={16} color="white" />
-                            <Text style={styles.actionButtonText}>Marquer comme terminé</Text>
+                              style={[styles.actionButton, styles.coachProfileButton]}
+                              onPress={() => router.push({
+                                pathname: "/coach",
+                                params: { coachId: rdv.coach.id }
+                              })}
+                            >
+                            <MaterialIcons name="person" size={16} color="white" />
+                            <Text style={styles.actionButtonText}>Voir le profil du coach</Text>
                           </TouchableOpacity>
-                        )}
-                        
-                        {rdv.statut !== 'annulé' && (
-                          <TouchableOpacity
-                            style={[styles.actionButton, styles.cancelButton]}
-                            onPress={() => updateRendezvousStatus(rdv.id, 'annulé')}
-                          >
-                            <MaterialIcons name="cancel" size={16} color="white" />
-                            <Text style={styles.actionButtonText}>Annuler</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
+                        </View>
+                      )}
                     </View>
                   )}
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           ))
@@ -501,6 +460,22 @@ const styles = StyleSheet.create({
   activeFilterText: {
     color: 'white',
   },
+  newAppointmentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#22C55E',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  newAppointmentText: {
+    color: 'white',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
   scrollContainer: {
     flex: 1,
   },
@@ -519,6 +494,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     textAlign: 'center',
+  },
+  switchFilterButton: {
+    backgroundColor: '#FF6A88',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  switchFilterText: {
+    color: 'white',
+    fontWeight: '600',
   },
   centeredContainer: {
     flex: 1,
@@ -628,26 +614,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'capitalize',
   },
-  clientContainer: {
+  coachContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
   },
-  clientAvatar: {
+  coachAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
   },
-  clientInfo: {
+  coachInfo: {
     flex: 1,
     marginLeft: 12,
   },
-  clientName: {
+  coachName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#0F172A',
   },
-  clientEmail: {
+  coachSpeciality: {
     fontSize: 12,
     color: '#64748B',
   },
@@ -681,11 +667,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginLeft: 8,
   },
-  completeButton: {
-    backgroundColor: '#22C55E',
-  },
-  cancelButton: {
-    backgroundColor: '#EF4444',
+  coachProfileButton: {
+    backgroundColor: '#3B82F6',
   },
   actionButtonText: {
     color: 'white',
