@@ -24,7 +24,6 @@ export default function Settings() {
         return;
       }
       
-      // Préparation du contenu de l'email
       const subject = encodeURIComponent("Demande pour devenir coach");
       const body = encodeURIComponent(
         `Bonjour,\n\n` +
@@ -119,13 +118,13 @@ export default function Settings() {
             <Text style={styles.sectionTitle}>Mon compte</Text>
           </View>
           <TouchableOpacity style={styles.button}>
-            <Text>Informations personnelles</Text>
+            <Text style={styles.buttonText}>Informations personnelles</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Plan nutritionnel</Text>
+            <Text style={styles.buttonText}>Plan nutritionnel</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Premium</Text>
+            <Text style={styles.buttonText}>Premium</Text>
           </TouchableOpacity>
         </View>
 
@@ -152,19 +151,19 @@ export default function Settings() {
             <Text style={styles.sectionTitle}>Objectifs & Suivi</Text>
           </View>
           <TouchableOpacity style={styles.button}>
-            <Text>Objectif de poids</Text>
+            <Text style={styles.buttonText}>Objectif de poids</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Besoins caloriques</Text>
+            <Text style={styles.buttonText}>Besoins caloriques</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Répartition des macros</Text>
+            <Text style={styles.buttonText}>Répartition des macros</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Aliments favoris</Text>
+            <Text style={styles.buttonText}>Aliments favoris</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Mes recettes</Text>
+            <Text style={styles.buttonText}>Mes recettes</Text>
           </TouchableOpacity>
         </View>
 
@@ -199,7 +198,7 @@ export default function Settings() {
             onPress={() => handleConnectDevice('Apple Watch')}
           >
             <View style={styles.deviceButton}>
-              <Text>Apple Watch</Text>
+              <Text style={styles.buttonText}>Apple Watch</Text>
               {connectedDevices.includes('Apple Watch') && (
                 <MaterialIcons name="check-circle" size={20} color="#22c55e" />
               )}
@@ -210,8 +209,19 @@ export default function Settings() {
             onPress={() => handleConnectDevice('Samsung Watch')}
           >
             <View style={styles.deviceButton}>
-              <Text>Samsung Watch</Text>
+              <Text style={styles.buttonText}>Samsung Watch</Text>
               {connectedDevices.includes('Samsung Watch') && (
+                <MaterialIcons name="check-circle" size={20} color="#22c55e" />
+              )}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={() => handleConnectDevice('Fitbit')}
+          >
+            <View style={styles.deviceButton}>
+              <Text style={styles.buttonText}>Fitbit</Text>
+              {connectedDevices.includes('Fitbit') && (
                 <MaterialIcons name="check-circle" size={20} color="#22c55e" />
               )}
             </View>
@@ -225,13 +235,13 @@ export default function Settings() {
             <Text style={styles.sectionTitle}>Support</Text>
           </View>
           <TouchableOpacity style={styles.button}>
-            <Text>Guide d'utilisation</Text>
+            <Text style={styles.buttonText}>Guide d'utilisation</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Contactez-nous</Text>
+            <Text style={styles.buttonText}>Contactez-nous</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text>Confidentialité</Text>
+            <Text style={styles.buttonText}>Confidentialité</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -333,5 +343,10 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '400',
   },
 });

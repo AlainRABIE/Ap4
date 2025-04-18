@@ -269,20 +269,28 @@ export default function AdminProfile() {
         
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Actions</Text>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => router.push('/client')}
-          >
-            <Ionicons name="people-outline" size={22} color="#FFF" />
-            <Text style={styles.actionButtonText}>Gestion des utilisateurs</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => router.push('/coach')}
-          >
-            <Ionicons name="barbell-outline" size={22} color="#FFF" />
-            <Text style={styles.actionButtonText}>Gestion des coachs</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.actionGrid}>
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => router.push('/client')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#4CAF50' }]}>
+                <Ionicons name="people-outline" size={24} color="#FFF" />
+              </View>
+              <Text style={styles.actionCardText}>Mes clients</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => router.push('/rendezvouscoach')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#2196F3' }]}>
+                <Ionicons name="calendar-outline" size={24} color="#FFF" />
+              </View>
+              <Text style={styles.actionCardText}>Rendez-vous</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         
         <TouchableOpacity 
@@ -442,20 +450,37 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
   },
-  actionButton: {
+  actionGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FF6A88',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    marginBottom: 12,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  actionButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+  actionCard: {
+    width: '48%',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  actionCardText: {
+    fontSize: 14,
     fontWeight: '600',
-    marginLeft: 10,
+    color: '#333',
+    textAlign: 'center',
   },
   logoutButton: {
     flexDirection: 'row',
