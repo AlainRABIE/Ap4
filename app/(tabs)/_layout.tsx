@@ -105,36 +105,42 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen
           name="profilcoach"
           options={{
-            title: "Profil",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
+        title: "Profil",
+        tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="client"
           options={{
-            title: "Client",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
+        title: "Client",
+        tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="home"
           options={{
-            title: "Acceuil",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
+        title: "Acceuil",
+        tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="seance"
           options={{
-            title: "Acceuil",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
+        title: "Acceuil",
+        tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="rendezvouscoach"
           options={{
-            title: "Rendez-vous",
-            tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar-outline" size={size} color={color} focused={focused} />,
+        title: "Rendez-vous",
+        tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="time" size={size} color={color} focused={focused} />,          }}
+        />
+         <Tabs.Screen
+          name="planning"
+          options={{
+        title: "Planning",
+        tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar" size={size} color={color} focused={focused} />,
           }}
         />
 
@@ -145,6 +151,8 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen name="Listclient" options={{ href: null }} />
         <Tabs.Screen name="Listcoach" options={{ href: null }} />
         <Tabs.Screen name="Listutilisateur" options={{ href: null }} />
+        <Tabs.Screen name="coach" options={{ href: null }} />
+        <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
