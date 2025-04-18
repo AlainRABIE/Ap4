@@ -196,7 +196,7 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         name="rdv"
         options={{
           title: "Mes Rendez-vous",
-          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="calendar" size={size} color={color} focused={focused} iconType="material" />,
+          tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="event" size={size} color={color} focused={focused} iconType="material" />,
         }}
       />
 
