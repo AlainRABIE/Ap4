@@ -1,6 +1,7 @@
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import app from '../firebase/firebaseConfig';
+import * as ImagePicker from "expo-image-picker";
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -95,6 +96,38 @@ export interface Aliment {
 export interface MealCaloriesResult {
   meals: Aliment[];
   totalCalories: number;
+}
+
+export interface MealData {
+  nom: string;
+  calories: number;
+  Repas: string;
+  urlPhoto: string;
+  date: Date;
+}
+
+export const addMeal = async (mealData: MealData): Promise<void> => {
+  const user = auth.currentUser;
+  
+  if (!user) {
+    throw new Error("Vous devez être connecté pour ajouter un repas.");
+  }
+  
+  try {
+    const newMeal = {
+      nom: mealData.nom,
+      calories: mealData.calories,
+      Repas: mealData.Repas,
+      urlPhoto: mealData.urlPhoto,
+      utilisateurId: user.uid,
+      date: mealData.date.toISOString(),
+    };
+    
+    await addDoc(collection(db, "aliments"), newMeal);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du repas :", error);
+    throw new Error("Impossible d'ajouter le repas.");
+  }
 }
 
 export const fetchMealByDate = async (
@@ -208,4 +241,46 @@ export const calculateCaloriesForDay = async (date: Date) => {
 export const calculateBurnedCalories = (steps: number): number => {
   const caloriesBruleesParPas = 0.05;
   return Math.round(steps * caloriesBruleesParPas);
+};
+
+export const takePhoto = async (): Promise<string | null> => {
+  const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permissionResult.granted) {
+    throw new Error("Vous devez autoriser l'accès à la caméra.");
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.8,
+    aspect: [4, 3],
+  });
+
+  if (!result.canceled) {
+    return result.assets[0].uri;
+  }
+  
+  return null;
+};
+
+export const pickImage = async (): Promise<string | null> => {
+  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+  if (!permissionResult.granted) {
+    throw new Error("Vous devez autoriser l'accès à la galerie.");
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.8,
+    aspect: [4, 3],
+  });
+
+  if (!result.canceled) {
+    return result.assets[0].uri;
+  }
+  
+  return null;
 };

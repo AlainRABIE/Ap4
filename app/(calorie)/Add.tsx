@@ -15,10 +15,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 import { TextInput } from "react-native-paper";
+import { takePhoto, pickImage, addMeal, MealData } from "../../services/calorie";
 
 export default function AddMeal() {
   const [mealName, setMealName] = useState("");
@@ -31,13 +29,11 @@ export default function AddMeal() {
 
   const router = useRouter();
   const params = useLocalSearchParams();
-  const db = getFirestore();
-  const auth = getAuth();
 
   // Récupère le type de repas et la date depuis les paramètres de navigation
   useEffect(() => {
     if (paramsProcessedRef.current) return;
-    
+
     if (params.mealType && typeof params.mealType === "string") {
       setMealType(params.mealType);
     }
@@ -53,7 +49,7 @@ export default function AddMeal() {
         console.error("Erreur lors du parsing de la date:", error);
       }
     }
-    
+
     paramsProcessedRef.current = true;
   }, [params]);
 
@@ -77,82 +73,54 @@ export default function AddMeal() {
 
     try {
       setLoading(true);
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        Alert.alert(
-          "Erreur",
-          "Vous devez être connecté pour ajouter un repas."
-        );
-        setLoading(false);
-        return;
-      }
-
-      // Utiliser la date sélectionnée plutôt que la date actuelle
-      const newMeal = {
+      
+      const mealData: MealData = {
         nom: mealName,
         calories: parseInt(calories),
         Repas: mealType,
         urlPhoto: photo || "",
-        utilisateurId: currentUser.uid,
-        date: selectedDate.toISOString(),
+        date: selectedDate,
       };
 
-      await addDoc(collection(db, "aliments"), newMeal);
+      await addMeal(mealData);
       Alert.alert("Succès", "Repas ajouté avec succès !");
       router.back();
     } catch (error) {
       console.error("Erreur lors de l'ajout du repas :", error);
-      Alert.alert("Erreur", "Impossible d'ajouter le repas.");
+      Alert.alert(
+        "Erreur", 
+        error instanceof Error ? error.message : "Impossible d'ajouter le repas."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const takePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permissionResult.granted) {
+  const handleTakePhoto = async () => {
+    try {
+      const photoUri = await takePhoto();
+      if (photoUri) {
+        setPhoto(photoUri);
+      }
+    } catch (error) {
       Alert.alert(
         "Permission refusée",
-        "Vous devez autoriser l'accès à la caméra."
+        error instanceof Error ? error.message : "Vous devez autoriser l'accès à la caméra."
       );
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-      aspect: [4, 3],
-    });
-
-    if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
     }
   };
 
-  const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permissionResult.granted) {
+  const handlePickImage = async () => {
+    try {
+      const photoUri = await pickImage();
+      if (photoUri) {
+        setPhoto(photoUri);
+      }
+    } catch (error) {
       Alert.alert(
         "Permission refusée",
-        "Vous devez autoriser l'accès à la galerie."
+        error instanceof Error ? error.message : "Vous devez autoriser l'accès à la galerie."
       );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-      aspect: [4, 3],
-    });
-
-    if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
     }
   };
 
@@ -246,7 +214,7 @@ export default function AddMeal() {
             <View style={styles.photoButtons}>
               <TouchableOpacity
                 style={[styles.photoButton, styles.cameraButton]}
-                onPress={takePhoto}
+                onPress={handleTakePhoto}
               >
                 <Ionicons name="camera" size={24} color="#fff" />
                 <Text style={styles.photoButtonText}>Appareil photo</Text>
@@ -254,7 +222,7 @@ export default function AddMeal() {
 
               <TouchableOpacity
                 style={[styles.photoButton, styles.galleryButton]}
-                onPress={pickImage}
+                onPress={handlePickImage}
               >
                 <Ionicons name="images" size={24} color="#fff" />
                 <Text style={styles.photoButtonText}>Galerie</Text>
