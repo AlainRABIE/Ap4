@@ -86,15 +86,14 @@ function MyTabs({ userRole }: { userRole: string | null }) {
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />
-        <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
         <Tabs.Screen name="profilcoach" options={{ href: null }} />
+        <Tabs.Screen name="admin" options={{ href: null }} />
         <Tabs.Screen name="planning" options={{ href: null }} />
         <Tabs.Screen name="client" options={{ href: null }} />
         <Tabs.Screen name="rdv" options={{ href: null }} />
         <Tabs.Screen name="rendezvouscoach" options={{ href: null }} />
-        <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
   }
@@ -144,21 +143,17 @@ function MyTabs({ userRole }: { userRole: string | null }) {
           }}
         />
 
-        {/* Toutes mes pages cachées pour le coach */}
         <Tabs.Screen name="dashboard" options={{ href: null }} />
         <Tabs.Screen name="Exercice" options={{ href: null }} />
-        <Tabs.Screen name="coach_dashboard" options={{ href: null }} />
         <Tabs.Screen name="Listclient" options={{ href: null }} />
         <Tabs.Screen name="Listcoach" options={{ href: null }} />
         <Tabs.Screen name="Listutilisateur" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="admin" options={{ href: null }} />
-        <Tabs.Screen name="chrono" options={{ href: null }} />
         <Tabs.Screen name="recette" options={{ href: null }} />
         <Tabs.Screen name="profil" options={{ href: null }} />
         <Tabs.Screen name="profiladmin" options={{ href: null }} />
         <Tabs.Screen name="rdv" options={{ href: null }} />
-        <Tabs.Screen name="coachlist" options={{ href: null }} />
       </Tabs>
     );
   }
@@ -216,7 +211,6 @@ function MyTabs({ userRole }: { userRole: string | null }) {
       <Tabs.Screen name="Listutilisateur" options={{ href: null }} />
       <Tabs.Screen name="profilcoach" options={{ href: null }} />
       <Tabs.Screen name="profiladmin" options={{ href: null }} />
-      <Tabs.Screen name="programmeclient" options={{ href: null }} />
       <Tabs.Screen name="seance" options={{ href: null }} />
       <Tabs.Screen name="coach_dashboard" options={{ href: null }} />
     </Tabs>
