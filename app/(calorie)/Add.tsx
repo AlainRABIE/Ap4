@@ -30,7 +30,6 @@ export default function AddMeal() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // Récupère le type de repas et la date depuis les paramètres de navigation
   useEffect(() => {
     if (paramsProcessedRef.current) return;
 
@@ -38,7 +37,6 @@ export default function AddMeal() {
       setMealType(params.mealType);
     }
 
-    // Récupérer la date sélectionnée depuis les paramètres
     if (params.date && typeof params.date === "string") {
       try {
         const dateFromParam = new Date(params.date);
@@ -53,7 +51,6 @@ export default function AddMeal() {
     paramsProcessedRef.current = true;
   }, [params]);
 
-  // Formater la date pour l'affichage
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString("fr-FR", {
       weekday: "long",
