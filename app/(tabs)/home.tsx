@@ -13,16 +13,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Pedometer } from "expo-sensors";
 import { useRouter } from "expo-router";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 import { useFocusEffect } from '@react-navigation/native';
-
-interface Aliment {
-  id: string;
-  nom: string;
-  calories: number;
-  urlPhoto: string;
-}
+import { 
+  fetchMealByDate, 
+  fetchAllMealsByDate, 
+  calculateCaloriesForDay, 
+  calculateBurnedCalories,
+  Aliment
+} from '../../services/calorie';
 
 interface RepasData {
   "Petit-déjeuner": Aliment[];
@@ -114,86 +112,28 @@ const NutritionScreen = () => {
     startPedometer();
   }, []);
 
-  const formatDateForQuery = (date: Date): string => {
-    return date.toISOString().split('T')[0]; 
-  };
-
   const fetchAllMealData = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        fetchMealByDate("Petit-déjeuner"),
-        fetchMealByDate("Déjeuner"),
-        fetchMealByDate("Dîner"),
-        fetchMealByDate("Collation")
-      ]);
+      const allMeals = await fetchAllMealsByDate(currentDay);
+      
+      setBreakfastCalories(allMeals["Petit-déjeuner"].totalCalories);
+      setLunchCalories(allMeals["Déjeuner"].totalCalories);
+      setDinnerCalories(allMeals["Dîner"].totalCalories);
+      setSnackCalories(allMeals["Collation"].totalCalories);
+      
+      setRepasData({
+        "Petit-déjeuner": allMeals["Petit-déjeuner"].meals,
+        "Déjeuner": allMeals["Déjeuner"].meals,
+        "Dîner": allMeals["Dîner"].meals,
+        "Collation": allMeals["Collation"].meals
+      });
     } catch (error) {
       console.error("Erreur lors de la récupération des repas:", error);
     } finally {
       setLoading(false);
     }
   }, [currentDay]);
-
-  const fetchMealByDate = async (mealType: "Petit-déjeuner" | "Déjeuner" | "Dîner" | "Collation") => {
-    try {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) return;
-
-      const db = getFirestore();
-      const dateString = formatDateForQuery(currentDay);
-      
-      const q = query(
-        collection(db, "aliments"),
-        where("utilisateurId", "==", currentUser.uid),
-        where("Repas", "==", mealType)
-      );
-
-      const querySnapshot = await getDocs(q);
-      const meals: Aliment[] = [];
-      let totalCalories = 0;
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const alimDate = data.date ? new Date(data.date).toISOString().split('T')[0] : null;
-        
-        if (alimDate === dateString) {
-          const calories = parseInt(data.calories || 0);
-          totalCalories += calories;
-          
-          meals.push({
-            id: doc.id,
-            nom: data.nom || "Aliment sans nom",
-            calories: calories,
-            urlPhoto: data.urlPhoto || ""
-          });
-        }
-      });
-
-      switch (mealType) {
-        case "Petit-déjeuner":
-          setBreakfastCalories(totalCalories);
-          break;
-        case "Déjeuner":
-          setLunchCalories(totalCalories);
-          break;
-        case "Dîner":
-          setDinnerCalories(totalCalories);
-          break;
-        case "Collation":
-          setSnackCalories(totalCalories);
-          break;
-      }
-
-      setRepasData(prev => ({
-        ...prev,
-        [mealType]: meals
-      }));
-    } catch (error) {
-      console.error(`Erreur pour ${mealType}:`, error);
-    }
-  };
 
   const fetchPedometerData = useCallback(async () => {
     try {
@@ -232,38 +172,20 @@ const NutritionScreen = () => {
   useEffect(() => {
     const fetchCalories = async () => {
       try {
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-
-        if (!currentUser) {
-          console.error("Aucun utilisateur connecté");
-          return;
-        }
-
-        const db = getFirestore();
-        const userDoc = doc(db, "utilisateurs", currentUser.uid);
-        const userSnap = await getDoc(userDoc);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const caloriesNecessaires = userData.caloriesNecessaires || 0;
-
-          const totalConsumed = breakfastCalories + lunchCalories + dinnerCalories + snackCalories;
-
-          setCaloriesTotales(caloriesNecessaires);
-          setCaloriesRestantes(caloriesNecessaires - totalConsumed);
-          
-          const caloriesBruleesParPas = 0.05;
-          const caloriesBrulees = Math.round(steps * caloriesBruleesParPas);
-          setCaloriesBrulees(caloriesBrulees);
-        }
+        const caloriesData = await calculateCaloriesForDay(currentDay);
+        
+        setCaloriesTotales(caloriesData.caloriesTotales);
+        setCaloriesRestantes(caloriesData.caloriesRestantes);
+        
+        const caloriesBrulees = calculateBurnedCalories(steps);
+        setCaloriesBrulees(caloriesBrulees);
       } catch (error) {
         console.error("Erreur lors du calcul des calories :", error);
       }
     };
 
     fetchCalories();
-  }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories]);
+  }, [steps, breakfastCalories, lunchCalories, dinnerCalories, snackCalories, currentDay]);
 
   const handleAddGlass = () => {
     if (waterGlasses < 8) setWaterGlasses(waterGlasses + 1);
