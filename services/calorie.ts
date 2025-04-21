@@ -5,7 +5,6 @@ import app from '../firebase/firebaseConfig';
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Fonction pour calculer le BMR selon la formule de Mifflin-St Jeor
 const calculateBMR = (poids: number, taille: number, age: number, sexe: string): number => {
   if (sexe === 'homme') {
     return 10 * poids + 6.25 * taille - 5 * age + 5;
@@ -14,18 +13,16 @@ const calculateBMR = (poids: number, taille: number, age: number, sexe: string):
   }
 };
 
-// Fonction pour récupérer le multiplicateur d'activité
 const getActivityMultiplier = (niveauActivite: string): number => {
   switch (niveauActivite) {
     case 'sedentaire': return 1.2;
     case 'legere': return 1.375;
     case 'moderee': return 1.55;
     case 'intense': return 1.725;
-    default: return 1.2;  // Sédentaire par défaut
+    default: return 1.2;  
   }
 };
 
-// Fonction pour enregistrer ou mettre à jour les données de l'utilisateur dans Firestore
 export const saveUserProfile = async (
   nomComplet: string,
   poids: string,
@@ -41,13 +38,10 @@ export const saveUserProfile = async (
   const tailleNum = parseFloat(taille);
   const ageNum = parseInt(age);
 
-  // Calcul du BMR
   const bmr = calculateBMR(poidsNum, tailleNum, ageNum, sexe);
-  // Calcul des calories nécessaires
   const caloriesNecessaires = bmr * getActivityMultiplier(niveauActivite);
 
   try {
-    // Enregistrement des données dans Firestore
     await setDoc(doc(db, 'utilisateurs', user.uid), {
       nomComplet,
       poids: poidsNum,
@@ -65,7 +59,6 @@ export const saveUserProfile = async (
   }
 };
 
-// Fonction pour récupérer les informations de l'utilisateur depuis Firestore
 export const getUserProfile = async () => {
   const user = auth.currentUser;
   if (!user) throw new Error('Utilisateur non trouvé.');

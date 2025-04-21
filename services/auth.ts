@@ -2,36 +2,24 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } f
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import app from '../firebase/firebaseConfig';
 
-// Initialisation de Firebase Auth et Firestore
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/**
- * Inscription d'un nouvel utilisateur
- * @param email - Email de l'utilisateur
- * @param password - Mot de passe de l'utilisateur
- * @param nomComplet - Nom complet de l'utilisateur
- * @param departement - Département de l'utilisateur
- * @returns Les informations de l'utilisateur inscrit
- */
 export const register = async (email: string, password: string, nomComplet: string, departement: string) => {
   try {
-    // 1️⃣ Création de l'utilisateur dans Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
     console.log('Utilisateur inscrit avec succès :', user);
 
-    // 2️⃣ Ajout des informations de l'utilisateur dans Firestore
     await setDoc(doc(db, 'utilisateurs', user.uid), {
       id: user.uid,
       email: user.email,
       nomComplet: nomComplet,
-      departement: departement,
-      role: 'utilisateur', // Rôle par défaut
+      role: 'utilisateur', 
       dateCreation: new Date(),
       derniereConnexion: new Date(),
-      urlAvatar: '', // Optionnel, l'utilisateur pourra ajouter une photo plus tard
+      urlAvatar: '',
     });
 
     return user;
@@ -41,19 +29,12 @@ export const register = async (email: string, password: string, nomComplet: stri
   }
 };
 
-/**
- * Connexion d'un utilisateur existant
- * @param email - Email de l'utilisateur
- * @param password - Mot de passe de l'utilisateur
- * @returns Les informations complètes de l'utilisateur connecté (Firebase Auth + données Firestore)
- */
 export const login = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     console.log('Utilisateur connecté avec succès :', user);
     
-    // Récupération des données utilisateur depuis Firestore, y compris le rôle
     const userDocRef = doc(db, 'utilisateurs', user.uid);
     const userDoc = await getDoc(userDocRef);
     
@@ -63,10 +44,8 @@ export const login = async (email: string, password: string) => {
     
     const userData = userDoc.data();
     
-    // Mise à jour de la date de dernière connexion
     await setDoc(userDocRef, { derniereConnexion: new Date() }, { merge: true });
     
-    // Retourner l'objet utilisateur Firebase Auth et les données Firestore
     return {
       authUser: user,
       userData: userData
@@ -77,11 +56,6 @@ export const login = async (email: string, password: string) => {
   }
 };
 
-/**
- * Récupère les informations utilisateur stockées dans Firestore
- * @param userId - ID de l'utilisateur
- * @returns Les données utilisateur incluant le rôle
- */
 export const getUserData = async (userId: string) => {
   try {
     const userDocRef = doc(db, 'utilisateurs', userId);
@@ -98,12 +72,6 @@ export const getUserData = async (userId: string) => {
   }
 };
 
-/**
- * Met à jour les informations utilisateur dans Firestore
- * @param userId - ID de l'utilisateur
- * @param data - Données à mettre à jour
- * @returns Promesse résolue lorsque la mise à jour est terminée
- */
 export const updateUserData = async (userId: string, data: any) => {
   try {
     const userDocRef = doc(db, 'utilisateurs', userId);

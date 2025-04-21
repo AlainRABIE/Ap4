@@ -17,7 +17,6 @@ import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "fi
 import { getAuth } from "firebase/auth";
 import { useFocusEffect } from '@react-navigation/native';
 
-// Définition de l'interface pour les aliments
 interface Aliment {
   id: string;
   nom: string;
@@ -25,7 +24,6 @@ interface Aliment {
   urlPhoto: string;
 }
 
-// Interface pour les repas par type
 interface RepasData {
   "Petit-déjeuner": Aliment[];
   "Déjeuner": Aliment[];
@@ -33,19 +31,18 @@ interface RepasData {
   "Collation": Aliment[];
 }
 
-// Palette de couleurs néomorphique
 const COLORS = {
-  background: '#ECEFF1',  // Fond gris très clair
+  background: '#ECEFF1',  
   cardBackground: '#ECEFF1',
-  shadowDark: '#C7CCD1',  // Ombre foncée
-  shadowLight: '#FFFFFF', // Ombre claire
+  shadowDark: '#C7CCD1',  
+  shadowLight: '#FFFFFF', 
   textPrimary: '#37474F',
   textSecondary: '#78909C',
-  accent: '#FF5722',      // Orange
-  blue: '#03A9F4',        // Bleu
-  green: '#4CAF50',       // Vert
-  pink: '#E91E63',        // Rose
-  purple: '#673AB7',      // Violet
+  accent: '#FF5722',     
+  blue: '#03A9F4',       
+  green: '#4CAF50',      
+  pink: '#E91E63',       
+  purple: '#673AB7',     
 };
 
 const { width } = Dimensions.get("window");
@@ -59,18 +56,15 @@ const NutritionScreen = () => {
   const [isPedometerAvailable, setIsPedometerAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // États pour les calories
   const [caloriesTotales, setCaloriesTotales] = useState(0);
   const [caloriesRestantes, setCaloriesRestantes] = useState(0);
   const [caloriesBrulees, setCaloriesBrulees] = useState(0);
 
-  // États pour les calories par repas
   const [breakfastCalories, setBreakfastCalories] = useState(0);
   const [lunchCalories, setLunchCalories] = useState(0);
   const [dinnerCalories, setDinnerCalories] = useState(0);
   const [snackCalories, setSnackCalories] = useState(0);
   
-  // État pour stocker les aliments par repas et par date avec le type correct
   const [repasData, setRepasData] = useState<RepasData>({
     "Petit-déjeuner": [],
     "Déjeuner": [],
@@ -120,9 +114,8 @@ const NutritionScreen = () => {
     startPedometer();
   }, []);
 
-  // Fonction pour formater la date au format ISO (YYYY-MM-DD) pour comparer avec les dates de Firestore
   const formatDateForQuery = (date: Date): string => {
-    return date.toISOString().split('T')[0]; // Retourne YYYY-MM-DD
+    return date.toISOString().split('T')[0]; 
   };
 
   const fetchAllMealData = useCallback(async () => {
@@ -141,7 +134,6 @@ const NutritionScreen = () => {
     }
   }, [currentDay]);
 
-  // Nouvelle fonction pour récupérer les aliments par date et type de repas
   const fetchMealByDate = async (mealType: "Petit-déjeuner" | "Déjeuner" | "Dîner" | "Collation") => {
     try {
       const auth = getAuth();
@@ -164,7 +156,6 @@ const NutritionScreen = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Vérifier si la date de l'aliment correspond à la date sélectionnée
         const alimDate = data.date ? new Date(data.date).toISOString().split('T')[0] : null;
         
         if (alimDate === dateString) {
@@ -180,7 +171,6 @@ const NutritionScreen = () => {
         }
       });
 
-      // Mettre à jour les calories pour ce type de repas
       switch (mealType) {
         case "Petit-déjeuner":
           setBreakfastCalories(totalCalories);
@@ -196,7 +186,6 @@ const NutritionScreen = () => {
           break;
       }
 
-      // Mettre à jour les données des aliments avec le type correct
       setRepasData(prev => ({
         ...prev,
         [mealType]: meals
@@ -236,7 +225,6 @@ const NutritionScreen = () => {
     }, [fetchPedometerData, fetchAllMealData])
   );
   
-  // Ajouter un useEffect pour réagir aux changements de date
   useEffect(() => {
     fetchAllMealData();
   }, [currentDay, fetchAllMealData]);
@@ -286,7 +274,6 @@ const NutritionScreen = () => {
   };
 
   const navigateToAddMeal = (mealType: string) => {
-    // Convertir la date en string pour la passer en paramètre
     const dateParam = currentDay.toISOString();
     
     switch (mealType) {
@@ -310,11 +297,10 @@ const NutritionScreen = () => {
     }
   };
 
-  // Calcul du pourcentage pour les progress bars
   const calculateProgressPercentage = (consumed: number, total: number) => {
     if (total <= 0) return 0;
     const percentage = (consumed / total) * 100;
-    return Math.min(percentage, 100); // Cap at 100%
+    return Math.min(percentage, 100); 
   };
 
   const formatDate = (date: Date) => {
@@ -342,7 +328,6 @@ const NutritionScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* En-tête avec date et streak */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Nutrition</Text>
           
@@ -381,9 +366,7 @@ const NutritionScreen = () => {
           </View>
         </View>
 
-        {/* Carte des statistiques */}
         <View style={styles.statsSection}>
-          {/* Objectif */}
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
               <Ionicons name="flame-outline" size={24} color={COLORS.accent} />
@@ -394,7 +377,6 @@ const NutritionScreen = () => {
             </View>
           </View>
           
-          {/* Restantes */}
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
               <Ionicons name="restaurant-outline" size={24} color={COLORS.blue} />
@@ -405,7 +387,6 @@ const NutritionScreen = () => {
             </View>
           </View>
           
-          {/* Brûlées */}
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
               <Ionicons name="fitness-outline" size={24} color={COLORS.green} />
@@ -417,7 +398,6 @@ const NutritionScreen = () => {
           </View>
         </View>
 
-        {/* Suivi de l'eau */}
         <View style={styles.cardContainer}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleContainer}>
@@ -473,7 +453,6 @@ const NutritionScreen = () => {
           </View>
         </View>
 
-        {/* Section des repas */}
         <View style={styles.cardContainer}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleContainer}>
@@ -485,7 +464,6 @@ const NutritionScreen = () => {
           </View>
           
           <View style={styles.mealList}>
-            {/* Petit-déjeuner */}
             <TouchableOpacity 
               style={styles.mealRow}
               onPress={() => navigateToAddMeal("Petit-déjeuner")}
