@@ -2,20 +2,21 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Image,
   StyleSheet,
   Alert,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { TextInput } from "react-native-paper";
+import { takePhoto, pickImage, addMeal, MealData } from "../../services/calorie";
 
 export default function AddSoir() {
   const [mealName, setMealName] = useState("");
@@ -27,10 +28,7 @@ export default function AddSoir() {
 
   const router = useRouter();
   const params = useLocalSearchParams();
-  const db = getFirestore();
-  const auth = getAuth();
 
-  // Récupère la date depuis les paramètres de navigation
   useEffect(() => {
     if (paramsProcessedRef.current) return;
 
@@ -48,7 +46,6 @@ export default function AddSoir() {
     paramsProcessedRef.current = true;
   }, [params]);
 
-  // Formater la date pour l'affichage
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString("fr-FR", {
       weekday: "long",
@@ -65,104 +62,179 @@ export default function AddSoir() {
 
     try {
       setLoading(true);
-      const currentUser = auth.currentUser;
 
-      if (!currentUser) {
-        Alert.alert("Erreur", "Vous devez être connecté pour ajouter un repas.");
-        setLoading(false);
-        return;
-      }
-
-      const newMeal = {
+      const mealData: MealData = {
         nom: mealName,
         calories: parseInt(calories),
         Repas: "Dîner",
         urlPhoto: photo || "",
-        utilisateurId: currentUser.uid,
-        date: selectedDate.toISOString(),
+        date: selectedDate,
       };
 
-      await addDoc(collection(db, "aliments"), newMeal);
+      await addMeal(mealData);
       Alert.alert("Succès", "Repas ajouté avec succès !");
       router.back();
     } catch (error) {
       console.error("Erreur lors de l'ajout du repas :", error);
-      Alert.alert("Erreur", "Impossible d'ajouter le repas.");
+      Alert.alert(
+        "Erreur",
+        error instanceof Error ? error.message : "Impossible d'ajouter le repas."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const takePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permissionResult.granted) {
-      Alert.alert("Permission refusée", "Vous devez autoriser l'accès à la caméra.");
-      return;
+  const handleTakePhoto = async () => {
+    try {
+      const photoUri = await takePhoto();
+      if (photoUri) {
+        setPhoto(photoUri);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Permission refusée",
+        error instanceof Error ? error.message : "Vous devez autoriser l'accès à la caméra."
+      );
     }
+  };
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
+  const handlePickImage = async () => {
+    try {
+      const photoUri = await pickImage();
+      if (photoUri) {
+        setPhoto(photoUri);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Permission refusée",
+        error instanceof Error ? error.message : "Vous devez autoriser l'accès à la galerie."
+      );
     }
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-          <Text style={styles.backButtonText}>Retour</Text>
-        </TouchableOpacity>
+      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
 
-        <Text style={styles.title}>Ajouter un repas - Dîner</Text>
-
-        <View style={styles.dateContainer}>
-          <Ionicons name="calendar" size={18} color="#666" />
-          <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-        </View>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Entrez un plat ou un aliment"
-          value={mealName}
-          onChangeText={setMealName}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Entrez le nombre de calories"
-          value={calories}
-          onChangeText={setCalories}
-          keyboardType="numeric"
-        />
-
-        <TouchableOpacity style={styles.cameraContainer} onPress={takePhoto}>
-          <Ionicons name="camera" size={32} color="#fff" />
-          <Text style={styles.cameraText}>Prendre une photo</Text>
-        </TouchableOpacity>
-
-        {photo && (
-          <Image source={{ uri: photo }} style={styles.photoPreview} />
-        )}
-
-        <TouchableOpacity
-          style={styles.confirmButton}
-          onPress={handleConfirm}
-          disabled={loading}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.confirmButtonText}>Confirmer</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Ajouter un aliment</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <View style={styles.mealInfoContainer}>
+            <View style={styles.mealTypeWrapper}>
+              <Ionicons
+                name="moon"
+                size={20}
+                color="#fff"
+                style={styles.mealTypeIcon}
+              />
+              <Text style={styles.mealTypeName}>Dîner</Text>
+            </View>
+
+            <View style={styles.dateContainer}>
+              <Ionicons name="calendar" size={18} color="#666" />
+              <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+            </View>
+          </View>
+
+          <View style={styles.formContainer}>
+            <TextInput
+              mode="outlined"
+              label="Nom de l'aliment"
+              value={mealName}
+              onChangeText={setMealName}
+              style={styles.textInput}
+              placeholder="Ex: Soupe, Sandwich, Poisson..."
+              outlineColor="#dadada"
+              activeOutlineColor="#FF6A88"
+              left={<TextInput.Icon icon="food" />}
+            />
+
+            <TextInput
+              mode="outlined"
+              label="Calories"
+              value={calories}
+              onChangeText={setCalories}
+              keyboardType="numeric"
+              style={styles.textInput}
+              placeholder="Ex: 350"
+              outlineColor="#dadada"
+              activeOutlineColor="#FF6A88"
+              left={<TextInput.Icon icon="fire" />}
+              right={<TextInput.Affix text="kcal" />}
+            />
+          </View>
+
+          <View style={styles.photoSection}>
+            <Text style={styles.sectionTitle}>Photo de l'aliment</Text>
+
+            <View style={styles.photoButtons}>
+              <TouchableOpacity
+                style={[styles.photoButton, styles.cameraButton]}
+                onPress={handleTakePhoto}
+              >
+                <Ionicons name="camera" size={24} color="#fff" />
+                <Text style={styles.photoButtonText}>Appareil photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.photoButton, styles.galleryButton]}
+                onPress={handlePickImage}
+              >
+                <Ionicons name="images" size={24} color="#fff" />
+                <Text style={styles.photoButtonText}>Galerie</Text>
+              </TouchableOpacity>
+            </View>
+
+            {photo && (
+              <View style={styles.photoPreviewContainer}>
+                <Image source={{ uri: photo }} style={styles.photoPreview} />
+                <TouchableOpacity
+                  style={styles.removePhotoButton}
+                  onPress={removePhoto}
+                >
+                  <Ionicons name="close-circle" size={28} color="#FF6A88" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirm}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="checkmark" size={22} color="#fff" />
+                <Text style={styles.confirmButtonText}>Sauvegarder</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -170,83 +242,143 @@ export default function AddSoir() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F4F4",
+    backgroundColor: "#f5f5f5",
   },
-  scrollContainer: {
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     padding: 20,
-    paddingBottom: 40,
   },
-  backButton: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
+    paddingTop: 10,
   },
-  backButtonText: {
-    marginLeft: 5,
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+  },
+  mealInfoContainer: {
+    alignItems: "center",
+    marginBottom: 25,
+  },
+  mealTypeWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF6A88",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  mealTypeIcon: {
+    marginRight: 8,
+  },
+  mealTypeName: {
+    color: "white",
+    fontWeight: "700",
     fontSize: 16,
-    color: "#333",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    color: "#333",
-    textAlign: "center",
   },
   dateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    padding: 10,
+    marginTop: 8,
+    padding: 6,
     backgroundColor: "rgba(0,0,0,0.05)",
-    borderRadius: 8,
-    alignSelf: "center",
+    borderRadius: 50,
+    paddingHorizontal: 12,
   },
   dateText: {
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: 6,
+    fontSize: 14,
     color: "#666",
     textTransform: "capitalize",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
+  formContainer: {
+    marginBottom: 25,
+  },
+  textInput: {
     marginBottom: 15,
     backgroundColor: "#fff",
   },
-  cameraContainer: {
+  photoSection: {
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 15,
+  },
+  photoButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 15,
+  },
+  photoButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FF6A88",
     padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
+    borderRadius: 10,
+    flex: 0.48,
   },
-  cameraText: {
-    marginLeft: 10,
-    fontSize: 16,
+  cameraButton: {
+    backgroundColor: "#FF6A88",
+  },
+  galleryButton: {
+    backgroundColor: "#5E72E4",
+  },
+  photoButtonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "600",
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  photoPreviewContainer: {
+    position: "relative",
+    marginTop: 10,
   },
   photoPreview: {
     width: "100%",
     height: 200,
-    borderRadius: 8,
-    marginBottom: 20,
+    borderRadius: 10,
+  },
+  removePhotoButton: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   confirmButton: {
-    backgroundColor: "#FF6A88",
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: "#4CAF50",
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "center",
+    padding: 16,
+    borderRadius: 10,
+    marginTop: 10,
   },
   confirmButtonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "700",
     fontSize: 16,
+    marginLeft: 8,
   },
 });
