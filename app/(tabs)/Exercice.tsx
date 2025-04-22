@@ -8,7 +8,7 @@ const exercises = [
   { id: "2", name: "Dorsaux", image: require("../../assets/images/dos.png"), route: "/(exo)/abdoexo" }, 
   { id: "3", name: "Biceps", image: require("../../assets/images/biceps.png"), route: "/(exo)/bicepsexo" }, 
   { id: "4", name: "Jambe", image: require("../../assets/images/jambe.png"), route: "/(exo)/jambexo" },
-  { id: "5", name: "Pectoraux", image: require("../../assets/images/peck.png"), route: "/(exo)peckexo" }, 
+  { id: "5", name: "Pectoraux", image: require("../../assets/images/peck.png"), route: "/(exo)/peckexo" }, 
 ];
 
 const subscriptions = [

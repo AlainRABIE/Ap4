@@ -233,6 +233,14 @@ export default function CoachScreen() {
                   !item.availability && styles.profileButtonDisabled
                 ]}
                 disabled={!item.availability}
+                onPress={() => {
+                  if (item.availability) {
+                    router.push({
+                      pathname: '/(coach)/Presentation',
+                      params: { id: item.id }
+                    });
+                  }
+                }}
               >
                 <Text style={styles.profileButtonText}>
                   {item.availability ? 'Voir le profil' : 'Non disponible'}
