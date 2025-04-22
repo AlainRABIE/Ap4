@@ -150,7 +150,7 @@ export default function ExercisesScreen() {
       <StatusBar barStyle="dark-content" />
       <ScrollView style={styles.scrollView}>
         <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>Exercises</Text>
+          <Text style={styles.headerText}>Exercices</Text>
           <LinearGradient
             colors={["#FF6A88", "#FF99AC"]}
             start={{ x: 0, y: 0 }}
