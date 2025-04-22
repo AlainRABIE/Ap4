@@ -28,7 +28,7 @@ const RecetteDetail = () => {
     try {
       const sourceLang = targetLang === 'fr' ? 'en' : 'fr';
       const response = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
+        `https://api.mymemory.translated.net/get?q=${text}&langpair=${sourceLang}|${targetLang}`
       );
       const data = await response.json();
       return data.responseData.translatedText;

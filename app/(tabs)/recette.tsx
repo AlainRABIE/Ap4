@@ -55,7 +55,14 @@ const RecettePage = () => {
         `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
       );
       const data = await response.json();
-      return data.responseData.translatedText;
+
+      const translatedText = data.responseData.translatedText as string;
+      // for each occurence of %20 in the translatedText, replace it with a space, each %2C with a comma, eacch %26 with an ampersand
+      const uncodedText = translatedText
+        .replace(/%20/g, ' ')
+        .replace(/%2C/g, ',')
+        .replace(/%26/g, '&');
+      return uncodedText;
     } catch (error) {
       console.error('Erreur de traduction:', error);
       return text;
