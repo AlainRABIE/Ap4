@@ -119,7 +119,10 @@ export default function Login() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity 
+            style={styles.forgotPassword}
+            onPress={() => router.push("./Mdpoublie")}
+          >
             <Text style={styles.forgotPasswordText}>Mot de passe oublié?</Text>
           </TouchableOpacity>
 
