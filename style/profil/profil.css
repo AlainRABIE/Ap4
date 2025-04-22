@@ -22,7 +22,8 @@
 
 .headerContent {
   align-items: center;
-  padding-horizontal: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .avatarContainer {
@@ -59,8 +60,10 @@
   align-items: center;
   justify-content: center;
   background-color: rgba(255, 255, 255, 0.2);
-  padding-vertical: 10px;
-  padding-horizontal: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
   border-radius: 25px;
   margin-top: 5px;
 }
@@ -82,22 +85,21 @@
 .statsContainer {
   flex-direction: row;
   justify-content: space-evenly;
-  margin-horizontal: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
   margin-top: -50px;
 }
 
 .statCard {
   background-color: #FFFFFF;
   border-radius: 15px;
-  padding-vertical: 16px;
-  padding-horizontal: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  padding-left: 20px;
+  padding-right: 20px;
   align-items: center;
   width: 28%;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.05;
-  shadow-radius: 5px;
-  elevation: 3;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .statValue {
@@ -116,20 +118,10 @@
   background-color: #FFFFFF;
   border-radius: 20px;
   padding: 20px;
-  margin-horizontal: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
   margin-bottom: 20px;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.05;
-  shadow-radius: 5px;
-  elevation: 3;
-}
-
-.bmiHeader {
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .bmiTitle {
@@ -183,7 +175,8 @@
   flex-direction: row;
   justify-content: space-between;
   margin-top: 5px;
-  margin-horizontal: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 .bmiLabel {
@@ -195,26 +188,17 @@
   background-color: #FFFFFF;
   border-radius: 20px;
   padding: 20px;
-  margin-horizontal: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
   margin-bottom: 20px;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.05;
-  shadow-radius: 5px;
-  elevation: 3;
-}
-
-.sectionTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 15px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .editableField {
   flex-direction: row;
   align-items: center;
-  padding-vertical: 16px;
+  padding-top: 16px;
+  padding-bottom: 16px;
   border-bottom-width: 1px;
   border-bottom-color: #F0F0F0;
 }
@@ -307,11 +291,7 @@
   background-color: #FFF;
   border-radius: 24px;
   padding: 24px;
-  shadow-color: #000;
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.15;
-  shadow-radius: 12px;
-  elevation: 8;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .modalTitle {
@@ -341,7 +321,8 @@
 
 .modalButton {
   flex: 1;
-  padding-vertical: 16px;
+  padding-top: 16px;
+  padding-bottom: 16px;
   border-radius: 15px;
   align-items: center;
 }
