@@ -20,7 +20,6 @@ import { LinearGradient } from "expo-linear-gradient";
 const { width } = Dimensions.get('window');
 const RECIPE_CARD_WIDTH = width - 32;
 
-// Une liste d'ingrédients courants pour des suggestions
 const commonIngredients = [
   "poulet", "boeuf", "poisson", "fromage", "tomate", 
   "riz", "pâtes", "pomme de terre", "carotte", "oeuf"
@@ -68,7 +67,6 @@ const RecettePage = () => {
     setShowSuggestions(false);
     Keyboard.dismiss();
     
-    // Ajouter à l'historique de recherche
     if (!recentSearches.includes(ingredients)) {
       setRecentSearches(prev => [ingredients, ...prev.slice(0, 4)]);
     }
@@ -80,7 +78,6 @@ const RecettePage = () => {
       const data = await response.json();
       
       if (data.meals) {
-        // Récupérer des détails supplémentaires pour chaque recette
         const detailedRecipes = await Promise.all(
           data.meals.slice(0, 15).map(async (recipe: any) => {
             try {
