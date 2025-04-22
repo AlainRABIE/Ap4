@@ -88,7 +88,6 @@ export default function Mdpoublie() {
     checkmarkScale.value = withSpring(1, { damping: 12 });
     checkmarkOpacity.value = withTiming(1);
     
-    // Rediriger vers la page de connexion après l'animation
     setTimeout(() => {
       router.replace('/login');
     }, 2500);
