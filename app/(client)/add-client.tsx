@@ -22,31 +22,27 @@ export default function AddClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Données du formulaire
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
     email: '',
     telephone: '',
-    dateNaissance: new Date(new Date().setFullYear(new Date().getFullYear() - 18)), // 18 ans par défaut
+    dateNaissance: new Date(new Date().setFullYear(new Date().getFullYear() - 18)), 
     objectif: '',
     notes: ''
   });
 
-  // Champs obligatoires
   const [errors, setErrors] = useState({
     nom: false,
     prenom: false,
     email: false
   });
 
-  // État pour le datepicker
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const updateFormField = (field: string, value: string | Date) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Réinitialiser l'erreur si une valeur est entrée
     if (field in errors && errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: false }));
     }
@@ -78,7 +74,6 @@ export default function AddClient() {
     try {
       setLoading(true);
 
-      // Vérifier si l'email existe déjà
       const emailCheck = query(
         collection(db, 'utilisateurs'),
         where('email', '==', formData.email.toLowerCase())
@@ -91,10 +86,8 @@ export default function AddClient() {
         return;
       }
 
-      // Générer un mot de passe temporaire
       const tempPassword = generateTemporaryPassword();
 
-      // Créer un compte Firebase Auth pour le client
       let userCredential;
       try {
         userCredential = await createUserWithEmailAndPassword(
@@ -105,7 +98,6 @@ export default function AddClient() {
       } catch (error: any) {
         console.error("Erreur lors de la création du compte Firebase Auth:", error);
         
-        // Gérer les erreurs spécifiques
         if (error.code === 'auth/email-already-in-use') {
           Alert.alert('Erreur', 'Cet email est déjà utilisé.');
         } else {
@@ -116,7 +108,6 @@ export default function AddClient() {
         return;
       }
 
-      // Récupérer l'ID de l'utilisateur connecté (le coach)
       const coachId = auth.currentUser ? auth.currentUser.uid : null;
       
       if (!coachId) {
@@ -125,7 +116,6 @@ export default function AddClient() {
         return;
       }
       
-      // Créer le document utilisateur dans Firestore
       const userData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
@@ -141,7 +131,6 @@ export default function AddClient() {
         photoURL: null
       };
 
-      // Ajouter l'utilisateur à Firestore
       await addDoc(collection(db, 'utilisateurs'), {
         ...userData,
         uid: userCredential.user.uid

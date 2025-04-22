@@ -82,7 +82,7 @@ export default function UtilisateursScreen() {
         return sortDirection === 'asc'
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
-      } else { // sortBy === 'date'
+      } else { 
         const dateA = a.dateInscription?.toDate?.() || new Date(0);
         const dateB = b.dateInscription?.toDate?.() || new Date(0);
         return sortDirection === 'asc'
@@ -103,7 +103,6 @@ export default function UtilisateursScreen() {
       const userRef = doc(db, 'utilisateurs', userId);
       await updateDoc(userRef, { role: 'coach' });
       
-      // Mettre à jour l'interface utilisateur en retirant l'utilisateur de la liste
       setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
       
       Alert.alert('Succès', 'L\'utilisateur a été promu au rôle de coach.');

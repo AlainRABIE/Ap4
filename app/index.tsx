@@ -6,12 +6,11 @@ export default function Index() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      // Redirect to the default route after ensuring the layout is mounted
       router.push("./(auth)/login");
     }, 0);
 
-    return () => clearTimeout(timeout); // Cleanup timeout
+    return () => clearTimeout(timeout); 
   }, [router]);
 
-  return null; // No UI is needed since this is just for redirection
+  return null; 
 }

@@ -34,7 +34,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         try {
-          // Récupérer les données supplémentaires de l'utilisateur depuis Firestore
           const userDoc = await getDoc(doc(db, "utilisateurs", firebaseUser.uid));
           
           if (userDoc.exists()) {
@@ -54,7 +53,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               role: userData.role
             });
           } else {
-            // Si l'utilisateur n'a pas de document dans Firestore, on utilise seulement les infos de base
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",

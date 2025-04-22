@@ -12,7 +12,6 @@ export default function LegExtension() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {/* Header avec bouton retour */}
         <LinearGradient
           colors={['#FF6A88', '#FF8E53']}
           start={{ x: 0, y: 0 }}
@@ -28,7 +27,6 @@ export default function LegExtension() {
           <View style={styles.placeholder} />
         </LinearGradient>
 
-        {/* Image de démonstration */}
         <View style={styles.imageContainer}>
           <Image
             source={require('../../../assets/images/jambe.png')}
@@ -37,9 +35,7 @@ export default function LegExtension() {
           />
         </View>
 
-        {/* Section principale */}
         <View style={styles.contentContainer}>
-          {/* Description de l'exercice */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="information-circle-outline" size={22} color="#FF6A88" />
@@ -50,7 +46,6 @@ export default function LegExtension() {
             </Text>
           </View>
 
-          {/* Exécution */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="list-outline" size={22} color="#FF6A88" />
@@ -122,7 +117,6 @@ export default function LegExtension() {
             </View>
           </View>
 
-          {/* Conseils */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="bulb-outline" size={22} color="#FF6A88" />
@@ -154,7 +148,6 @@ export default function LegExtension() {
             </View>
           </View>
 
-          {/* Muscles sollicités */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="body-outline" size={22} color="#FF6A88" />
@@ -175,7 +168,6 @@ export default function LegExtension() {
             </View>
           </View>
 
-          {/* Programme recommandé */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="calendar-outline" size={22} color="#FF6A88" />
@@ -201,7 +193,6 @@ export default function LegExtension() {
             </View>
           </View>
 
-          {/* Variantes */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="options-outline" size={22} color="#FF6A88" />
@@ -227,7 +218,6 @@ export default function LegExtension() {
             </View>
           </View>
           
-          {/* Erreurs à éviter */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="alert-circle-outline" size={22} color="#FF6A88" />
@@ -259,7 +249,6 @@ export default function LegExtension() {
             </View>
           </View>
 
-          {/* Adaptation pour rééducation */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="medkit-outline" size={22} color="#FF6A88" />

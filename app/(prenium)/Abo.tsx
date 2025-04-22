@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { collection, getDocs, getFirestore } from 'firebase/firestore'; // Ajout de getFirestore
+import { collection, getDocs, getFirestore } from 'firebase/firestore'; 
 import app from '../../firebase/firebaseConfig';
 
 const db = getFirestore(app);
 
-// Types pour les plans d'abonnement
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -20,11 +19,9 @@ export default function SubscriptionSelectionScreen() {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Charger les abonnements depuis Firebase
   useEffect(() => {
     const fetchSubscriptions = async () => {
       try {
-        // Récupérer la référence du document principal
         const mainDocRef = collection(db, "abonnement");
         const mainDocSnapshot = await getDocs(mainDocRef);
         
@@ -32,12 +29,10 @@ export default function SubscriptionSelectionScreen() {
         
         for (const doc of mainDocSnapshot.docs) {
           if (doc.id === 'VkDe7XSDpw7NW5iTiOwW') {
-            // Récupérer les sous-collections Basic, Plus et Pro
             const basicDoc = await getDocs(collection(doc.ref, 'Basic'));
             const plusDoc = await getDocs(collection(doc.ref, 'Plus'));
             const proDoc = await getDocs(collection(doc.ref, 'Pro'));
 
-            // Ajouter Basic
             basicDoc.forEach(doc => {
               const data = doc.data();
               plans.push({
@@ -49,7 +44,6 @@ export default function SubscriptionSelectionScreen() {
               });
             });
 
-            // Ajouter Plus
             plusDoc.forEach(doc => {
               const data = doc.data();
               plans.push({
@@ -61,7 +55,6 @@ export default function SubscriptionSelectionScreen() {
               });
             });
 
-            // Ajouter Pro
             proDoc.forEach(doc => {
               const data = doc.data();
               plans.push({
@@ -75,7 +68,6 @@ export default function SubscriptionSelectionScreen() {
           }
         }
         
-        // Trier les plans par prix
         plans.sort((a, b) => a.price - b.price);
         setSubscriptionPlans(plans);
         setLoading(false);

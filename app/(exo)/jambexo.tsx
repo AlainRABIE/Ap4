@@ -58,7 +58,6 @@ export default function LegExercises() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Header */}
       <LinearGradient
         colors={['#FF6A88', '#FF8E53']}
         start={{ x: 0, y: 0 }}
@@ -74,7 +73,6 @@ export default function LegExercises() {
         </TouchableOpacity>
       </LinearGradient>
       
-      {/* Exercise List */}
       <FlatList
         data={legExercises}
         keyExtractor={(item) => item.id}

@@ -1,4 +1,3 @@
-// app/CheckoutScreen.tsx
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, SafeAreaView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -12,7 +11,6 @@ const CheckoutScreen = () => {
   const planPrice = params.planPrice as string;
   const planPeriod = params.planPeriod as string;
   
-  // Animation de succès
   const successAnim = new Animated.Value(0);
   
   useEffect(() => {
@@ -30,7 +28,6 @@ const CheckoutScreen = () => {
     outputRange: [0.8, 1.2, 1]
   });
 
-  // Fonction pour rediriger vers la page d'accueil
   const goToHome = () => {
     router.push('/home');
   };

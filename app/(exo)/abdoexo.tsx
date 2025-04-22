@@ -5,8 +5,8 @@ interface AbdoExercise {
   id: string;
   name: string;
   description: string;
-  sets: string; // Séries
-  repsOrTime: string; // Répétitions ou temps
+  sets: string;
+  repsOrTime: string; 
 }
 
 const abdoExercises: AbdoExercise[] = [

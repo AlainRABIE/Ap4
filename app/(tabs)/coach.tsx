@@ -16,7 +16,7 @@ import { db } from '../../firebase/firebaseConfig';
 import { useRouter } from 'expo-router';
 
 interface Coach {
-  id: string; // ID Firestore
+  id: string;
   name: string;
   speciality: string;
   experience: number;
@@ -24,9 +24,9 @@ interface Coach {
   image: string;
   description: string;
   availability: boolean;
-  email?: string; // Optionnel, si disponible dans vos données
-  prix: number; // Prix par séance - renamed from price to prix to match your Firestore field
-  sessionPrice: string; // Ajout du champ sessionPrice
+  email?: string;
+  prix: number;
+  sessionPrice: string;
 }
 
 export default function CoachScreen() {
@@ -34,7 +34,7 @@ export default function CoachScreen() {
   const [specialityFilter, setSpecialityFilter] = useState<string>('');
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError,] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchCoaches = async () => {
@@ -47,25 +47,22 @@ export default function CoachScreen() {
         
         const coachesData: Coach[] = [];
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Réinitialiser à minuit pour comparer les dates uniquement
+        today.setHours(0, 0, 0, 0);
         
-        // Récupérer tous les coachs et leurs disponibilités
         const coachesPromises = querySnapshot.docs.map(async (docSnapshot) => {
           const data = docSnapshot.data();
           const coachId = docSnapshot.id;
           
-          // Rechercher des disponibilités pour ce coach spécifiquement avec dispo=1
           const disponibiliteRef = collection(db, "disponibilite");
           const disponibiliteQuery = query(
             disponibiliteRef,
             where("coach", "==", doc(db, "utilisateurs", coachId)),
-            where("dispo", "==", 1) // Uniquement les créneaux disponibles
+            where("dispo", "==", 1)
           );
           
           const disponibiliteSnapshot = await getDocs(disponibiliteQuery);
           let isAvailable = false;
           
-          // Un coach est disponible s'il a au moins un créneau disponible
           if (!disponibiliteSnapshot.empty) {
             isAvailable = true;
           }
@@ -80,14 +77,13 @@ export default function CoachScreen() {
             rating: data.rating || 5,
             image: data.photoURL || data.urlAvatar || data.image || "https://via.placeholder.com/150",
             description: data.description || "Aucune description disponible",
-            availability: isAvailable, // Disponibilité basée sur la présence d'au moins un créneau avec dispo=1
+            availability: isAvailable,
             email: data.email,
             prix: data.prix || 50,
             sessionPrice: data.sessionPrice || "50"
           };
         });
         
-        // Attendre que toutes les promesses soient résolues
         const resolvedCoaches = await Promise.all(coachesPromises);
         setCoaches(resolvedCoaches);
         setLoading(false);
@@ -250,7 +246,6 @@ export default function CoachScreen() {
                 disabled={!item.availability}
                 onPress={() => {
                   if (item.availability) {
-                    // Navigation vers la page de rendez-vous avec l'ID du coach
                     router.push({
                       pathname: '/(client)/rendezvous',
                       params: { coachId: item.id, coachName: item.name }
@@ -423,7 +418,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 10, // Ajout d'une marge en bas pour séparer les boutons
+    marginBottom: 10,
   },
   profileButtonDisabled: {
     backgroundColor: '#E0E0E0',
@@ -434,7 +429,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   appointmentButton: {
-    backgroundColor: '#4CAF50', // Couleur verte pour différencier de l'autre bouton
+    backgroundColor: '#4CAF50',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',

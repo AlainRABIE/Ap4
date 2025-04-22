@@ -43,19 +43,17 @@ export default function ProfileAdmin() {
     );
   }
 
-  // Fonction pour obtenir la couleur de badge selon le rôle
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return '#DC2626'; // Rouge pour admin
+        return '#DC2626'; 
       case 'coach':
-        return '#2563EB'; // Bleu pour coach
+        return '#2563EB'; 
       default:
-        return '#10B981'; // Vert pour utilisateur standard
+        return '#10B981';
     }
   };
 
-  // Fonction pour formater le texte du rôle
   const formatRoleText = (role: string) => {
     switch (role) {
       case 'admin':

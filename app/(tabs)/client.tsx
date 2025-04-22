@@ -64,14 +64,12 @@ export default function UtilisateursScreen() {
     fetchUtilisateurs();
   }, []);
 
-  // Filtrer les utilisateurs en fonction du terme de recherche
   const filteredUtilisateurs = utilisateurs.filter(user => 
     user.nomComplet.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.departement && user.departement.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Formater la date de dernière connexion
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Jamais connecté';
     
@@ -89,14 +87,12 @@ export default function UtilisateursScreen() {
     }
   };
 
-  // Placeholder pour l'avatar si non disponible
   const getAvatarSource = (urlAvatar: string | undefined) => {
     return urlAvatar && urlAvatar.length > 0
       ? { uri: urlAvatar }
-      : require('../../assets/images/default-avatar.png'); // Assurez-vous d'avoir cette image dans vos assets
+      : require('../../assets/images/default-avatar.png');
   };
 
-  // Rendu d'un élément utilisateur
   const renderUtilisateur = ({ item }: { item: Utilisateur }) => (
     <View style={styles.userCard}>
       <View style={styles.avatarContainer}>
@@ -169,7 +165,6 @@ export default function UtilisateursScreen() {
             onPress={() => {
               setError(null);
               setLoading(true);
-              // Refetch logic here
             }}
           >
             <Text style={styles.retryButtonText}>Réessayer</Text>
@@ -286,10 +281,10 @@ const styles = StyleSheet.create({
     borderColor: 'white',
   },
   abonnementPlus: {
-    backgroundColor: '#4f46e5', // Indigo
+    backgroundColor: '#4f46e5', 
   },
   abonnementBasic: {
-    backgroundColor: '#10b981', // Emerald
+    backgroundColor: '#10b981', 
   },
   abonnementText: {
     color: 'white',

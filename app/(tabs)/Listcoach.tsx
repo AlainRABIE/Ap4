@@ -76,7 +76,7 @@ export default function CoachScreen() {
         role: 'coach',
         dateInscription: new Date(),
       });
-      fetchCoaches(); // Refresh the list
+      fetchCoaches(); 
       Alert.alert('Succès', 'Le coach a été créé avec succès.');
     } catch (error) {
       console.error('Erreur lors de la création du coach:', error);
@@ -88,7 +88,7 @@ export default function CoachScreen() {
     try {
       const coachRef = doc(db, 'utilisateurs', coachId);
       await updateDoc(coachRef, updatedData);
-      fetchCoaches(); // Refresh the list
+      fetchCoaches(); 
       Alert.alert('Succès', 'Les informations du coach ont été mises à jour.');
     } catch (error) {
       console.error('Erreur lors de la mise à jour du coach:', error);
@@ -109,7 +109,6 @@ export default function CoachScreen() {
   };
 
   const filterAndSortCoaches = () => {
-    // Filtre par recherche
     let result = coaches.filter(coach => {
       const searchLower = searchQuery.toLowerCase();
       return (
@@ -119,7 +118,6 @@ export default function CoachScreen() {
       );
     });
 
-    // Tri
     result.sort((a, b) => {
       if (sortBy === 'name') {
         const nameA = a.nomComplet || a.email || '';
@@ -133,7 +131,7 @@ export default function CoachScreen() {
         return sortDirection === 'asc'
           ? dateA.getTime() - dateB.getTime()
           : dateB.getTime() - dateA.getTime();
-      } else { // sortBy === 'rating'
+      } else { 
         const ratingA = a.rating || 0;
         const ratingB = b.rating || 0;
         return sortDirection === 'asc'
@@ -154,7 +152,6 @@ export default function CoachScreen() {
       const coachRef = doc(db, 'utilisateurs', coachId);
       await updateDoc(coachRef, { role: 'utilisateur' });
       
-      // Mettre à jour l'interface utilisateur en retirant le coach de la liste
       setCoaches(prevCoaches => prevCoaches.filter(coach => coach.id !== coachId));
       
       Alert.alert('Succès', 'Le coach a été rétrogradé au rôle d\'utilisateur.');

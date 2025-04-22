@@ -6,8 +6,7 @@ const ActivityLevel = ({ navigation }: any) => {
   const [activityLevel, setActivityLevel] = useState('sedentaire');
 
   const handleSaveActivityLevel = () => {
-    // Enregistrer le niveau d'activité dans Firestore ou le calculer
-    navigation.replace('CaloriesCalculation');  // Rediriger vers la page de calcul des calories
+    navigation.replace('CaloriesCalculation');  
   };
 
   return (

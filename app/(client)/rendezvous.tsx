@@ -29,10 +29,10 @@ interface Availability {
   id: string;
   coach: string;
   dates: Timestamp;
-  dispo: number; // Modifié pour correspondre au nouveau format (0=indisponible, 1=disponible)
-  horaire?: string; // L'heure du créneau
-  horaires?: string[]; // Tableau des heures disponibles pour une date
-  docIds?: { [horaire: string]: string }; // IDs des documents par horaire
+  dispo: number; 
+  horaire?: string;
+  horaires?: string[]; 
+  docIds?: { [horaire: string]: string }; 
 }
 
 interface User {
@@ -90,7 +90,6 @@ export default function RendezVousScreen() {
     }
   }, [coachId]);
 
-  // Fonction pour récupérer les détails du coach
   const fetchCoachDetails = async (id: string) => {
     try {
       const coachDoc = await getDoc(doc(db, 'utilisateurs', id));
@@ -108,7 +107,6 @@ export default function RendezVousScreen() {
     }
   };
 
-  // Fonction pour récupérer les disponibilités du coach
   const fetchCoachAvailability = async (coachId: string) => {
     try {
       setLoading(true);
@@ -117,7 +115,7 @@ export default function RendezVousScreen() {
       const q = query(
         availabilityRef, 
         where('coach', '==', doc(db, 'utilisateurs', coachId)),
-        where('dispo', '==', 1) // Récupérer uniquement les créneaux disponibles (dispo=1)
+        where('dispo', '==', 1)
       );
       
       const querySnapshot = await getDocs(q);
@@ -128,15 +126,13 @@ export default function RendezVousScreen() {
         return;
       }
       
-      // Organiser les disponibilités par date
       const availabilityByDate = new Map();
       
       querySnapshot.forEach((docSnapshot) => {
         const data = docSnapshot.data();
         const dateObj = data.dates.toDate();
-        const dateStr = dateObj.toISOString().split('T')[0]; // Format YYYY-MM-DD
+        const dateStr = dateObj.toISOString().split('T')[0]; 
         
-        // Extraire l'heure du document ID (format: userId_YYYY-MM-DD_HH:00)
         const docId = docSnapshot.id;
         const horaireParts = docId.split('_');
         let horaire = '';
@@ -145,37 +141,32 @@ export default function RendezVousScreen() {
           horaire = horaireParts[horaireParts.length - 1];
         }
         
-        // Si pas d'horaire dans l'ID, utiliser celui du document s'il existe
         if (!horaire && data.horaire) {
           horaire = data.horaire;
         }
         
         if (!availabilityByDate.has(dateStr)) {
-          // Créer une nouvelle entrée pour cette date
           availabilityByDate.set(dateStr, {
-            id: dateStr, // Utiliser la date comme ID
+            id: dateStr, 
             coach: data.coach.path.split('/').pop(),
             dates: data.dates,
             dispo: 1,
-            horaires: [horaire], // Tableau des heures disponibles pour cette date
-            docIds: {[horaire]: docSnapshot.id} // IMPORTANT: Stocker les IDs des documents par horaire
+            horaires: [horaire], 
+            docIds: {[horaire]: docSnapshot.id} 
           });
         } else {
-          // Ajouter cet horaire à la date existante
           const existingData = availabilityByDate.get(dateStr);
           existingData.horaires.push(horaire);
-          existingData.docIds = {...existingData.docIds, [horaire]: docSnapshot.id}; // Ajouter le document ID pour cet horaire
+          existingData.docIds = {...existingData.docIds, [horaire]: docSnapshot.id}; 
           availabilityByDate.set(dateStr, existingData);
         }
       });
       
-      // Convertir la Map en tableau et trier par date
       const availabilityData = Array.from(availabilityByDate.values())
         .sort((a, b) => a.dates.seconds - b.dates.seconds);
       
       setAvailabilities(availabilityData);
       
-      // Sélectionner automatiquement la première date si elle existe
       if (availabilityData.length > 0) {
         const firstDate = formatDate(availabilityData[0].dates.toDate());
         setSelectedDate(firstDate);
@@ -189,7 +180,6 @@ export default function RendezVousScreen() {
     }
   };
 
-  // Fonction pour formater la date en format lisible
   const formatDate = (date: Date): string => {
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
@@ -200,17 +190,14 @@ export default function RendezVousScreen() {
     return date.toLocaleDateString('fr-FR', options);
   };
 
-  // Fonction pour vérifier si une date est sélectionnée
   const isDateSelected = (date: string): boolean => {
     return selectedDate === date;
   };
 
-  // Fonction pour vérifier si un horaire est sélectionné
   const isTimeSelected = (time: string): boolean => {
     return selectedTime === time;
   };
 
-  // Fonction pour réserver le rendez-vous
   const bookAppointment = async () => {
     if (!currentUser || !selectedDate || !selectedTime || !coachId) {
       Alert.alert('Erreur', 'Veuillez sélectionner une date et un horaire');
@@ -220,7 +207,6 @@ export default function RendezVousScreen() {
     try {
       setBookingInProgress(true);
       
-      // Trouver la disponibilité sélectionnée
       const selectedAvailability = availabilities.find(
         avail => formatDate(avail.dates.toDate()) === selectedDate
       );
@@ -229,9 +215,8 @@ export default function RendezVousScreen() {
         throw new Error("Disponibilité non trouvée");
       }
 
-      // Identifier le document précis du créneau horaire sélectionné
       const dateObj = selectedAvailability.dates.toDate();
-      const dateStr = dateObj.toISOString().split('T')[0]; // Format YYYY-MM-DD
+      const dateStr = dateObj.toISOString().split('T')[0];
       const docId = selectedAvailability.docIds?.[selectedTime];
 
       if (!docId) {
@@ -241,7 +226,6 @@ export default function RendezVousScreen() {
       
       console.log(`Mise à jour du créneau: ${docId} à dispo=0`);
       
-      // Créer le rendez-vous dans Firestore
       const rdvRef = await addDoc(collection(db, 'rendezvous'), {
         coach: doc(db, 'utilisateurs', coachId as string),
         client: doc(db, 'utilisateurs', currentUser.id),
@@ -253,28 +237,24 @@ export default function RendezVousScreen() {
       
       console.log(`Rendez-vous créé avec ID: ${rdvRef.id}`);
       
-      // IMPORTANT: Mettre à jour ce créneau horaire spécifique à dispo = 0 (indisponible)
       const dispoRef = doc(db, 'disponibilite', docId);
 
-      // Vérifier si le document existe et le mettre à jour
       const dispoDoc = await getDoc(dispoRef);
       if (dispoDoc.exists()) {
         await setDoc(dispoRef, {
           coach: doc(db, 'utilisateurs', coachId as string),
           dates: selectedAvailability.dates,
-          dispo: 0, // Marquer comme indisponible
+          dispo: 0,
           horaire: selectedTime
-        }, { merge: true }); // Utiliser merge:true pour s'assurer que la mise à jour fonctionne
+        }, { merge: true });
         console.log(`Document existant mis à jour avec dispo=0`);
       } else {
         console.error(`Document non trouvé: ${docId}`);
         throw new Error("Créneau horaire introuvable dans la base de données");
       }
       
-      // Mettre à jour la liste des disponibilités après la réservation (interface utilisateur)
       const updatedAvailabilities = availabilities.map(availability => {
         if (formatDate(availability.dates.toDate()) === selectedDate) {
-          // Filtrer le créneau horaire réservé de la liste des horaires disponibles
           const updatedHoraires = availability.horaires?.filter(horaire => horaire !== selectedTime) || [];
           return {
             ...availability,
@@ -284,7 +264,6 @@ export default function RendezVousScreen() {
         return availability;
       });
       
-      // Filtrer les dates qui n'ont plus d'horaires disponibles
       const filteredAvailabilities = updatedAvailabilities.filter(
         availability => availability.horaires && availability.horaires.length > 0
       );
@@ -306,7 +285,6 @@ export default function RendezVousScreen() {
     }
   };
 
-  // Affichage pendant le chargement
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -316,7 +294,6 @@ export default function RendezVousScreen() {
     );
   }
 
-  // Affichage en cas d'erreur
   if (error) {
     return (
       <View style={styles.container}>
@@ -355,7 +332,6 @@ export default function RendezVousScreen() {
         <Text style={styles.title}>Prendre rendez-vous</Text>
       </View>
       
-      {/* Informations du coach */}
       <View style={styles.coachInfoCard}>
         <Text style={styles.coachName}>
           {coachName || coachDetails?.nomComplet || 'Coach'}
@@ -370,7 +346,6 @@ export default function RendezVousScreen() {
       
       <Text style={styles.sectionTitle}>Choisissez une date</Text>
       
-      {/* Liste des dates disponibles */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -390,7 +365,7 @@ export default function RendezVousScreen() {
                 ]}
                 onPress={() => {
                   setSelectedDate(formattedDate);
-                  setSelectedTime(null); // Réinitialiser l'heure sélectionnée
+                  setSelectedTime(null);
                 }}
               >
                 <Text style={[

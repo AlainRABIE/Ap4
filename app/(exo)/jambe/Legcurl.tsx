@@ -12,7 +12,6 @@ export default function LegCurl() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {/* Header avec bouton retour */}
         <LinearGradient
           colors={['#FF6A88', '#FF8E53']}
           start={{ x: 0, y: 0 }}
@@ -28,7 +27,6 @@ export default function LegCurl() {
           <View style={styles.placeholder} />
         </LinearGradient>
 
-        {/* Image de démonstration */}
         <View style={styles.imageContainer}>
           <Image
             source={require('../../../assets/images/jambe.png')}
@@ -37,9 +35,7 @@ export default function LegCurl() {
           />
         </View>
 
-        {/* Section principale */}
         <View style={styles.contentContainer}>
-          {/* Description de l'exercice */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="information-circle-outline" size={22} color="#FF6A88" />
@@ -50,7 +46,6 @@ export default function LegCurl() {
             </Text>
           </View>
 
-          {/* Exécution */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="list-outline" size={22} color="#FF6A88" />
@@ -114,7 +109,6 @@ export default function LegCurl() {
             </View>
           </View>
 
-          {/* Exécution version assise */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="list-outline" size={22} color="#FF6A88" />
@@ -170,7 +164,6 @@ export default function LegCurl() {
             </View>
           </View>
 
-          {/* Conseils */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="bulb-outline" size={22} color="#FF6A88" />
@@ -202,7 +195,6 @@ export default function LegCurl() {
             </View>
           </View>
 
-          {/* Muscles sollicités */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="body-outline" size={22} color="#FF6A88" />
@@ -223,7 +215,6 @@ export default function LegCurl() {
             </View>
           </View>
 
-          {/* Programme recommandé */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="calendar-outline" size={22} color="#FF6A88" />
@@ -249,7 +240,6 @@ export default function LegCurl() {
             </View>
           </View>
 
-          {/* Variantes */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="options-outline" size={22} color="#FF6A88" />
@@ -281,7 +271,6 @@ export default function LegCurl() {
             </View>
           </View>
           
-          {/* Erreurs à éviter */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="alert-circle-outline" size={22} color="#FF6A88" />
@@ -313,7 +302,6 @@ export default function LegCurl() {
             </View>
           </View>
 
-          {/* Importance pour la prévention des blessures */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="shield-outline" size={22} color="#FF6A88" />

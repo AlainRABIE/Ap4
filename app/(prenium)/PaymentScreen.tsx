@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { STRIPE_PUBLISHABLE_KEY } from '../../config/stripe';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import app from '../../firebase/firebaseConfig'; // Adjust this import based on your Firebase configuration file
+import app from '../../firebase/firebaseConfig'; 
 
 export default function PaymentScreen() {
   const { createPaymentMethod, confirmPayment } = useStripe();
@@ -75,7 +75,6 @@ export default function PaymentScreen() {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Update user subscription in Firebase
       await updateUserSubscription();
 
       Alert.alert(

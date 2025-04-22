@@ -54,7 +54,6 @@ const EditableField = React.memo(({
   </TouchableOpacity>
 ));
 
-// Composant BMI
 const BMICard = React.memo(({ bmi, category, color }: { bmi: string, category: string, color: string }) => (
   <View style={styles.bmiCard}>
     <View style={styles.bmiHeader}>
@@ -107,7 +106,6 @@ const ViewProfilePage: React.FC = () => {
     ]).start();
   }, []);
 
-  // Mémoisation du calcul d'IMC
   const bmiData = useMemo(() => {
     if (user?.poids && user?.taille) {
       return profileService.calculateBMI(user.poids, user.taille);
@@ -115,7 +113,6 @@ const ViewProfilePage: React.FC = () => {
     return { bmi: null, category: "", color: "" };
   }, [user?.poids, user?.taille]);
 
-  // Optimisation des fonctions avec useCallback
   const handleLogout = useCallback(async () => {
     try {
       await profileService.signOut();

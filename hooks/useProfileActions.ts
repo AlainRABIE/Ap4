@@ -14,7 +14,6 @@ export const useProfileActions = () => {
   const [fieldToEdit, setFieldToEdit] = useState<FieldToEdit>("nomComplet");
   const [newValue, setNewValue] = useState("");
 
-  // Calcul de l'IMC
   const bmiData = useMemo(() => {
     if (user?.poids && user?.taille) {
       return profileService.calculateBMI(user.poids, user.taille);
@@ -22,7 +21,6 @@ export const useProfileActions = () => {
     return { bmi: null, category: "", color: "" };
   }, [user?.poids, user?.taille]);
 
-  // Action de déconnexion
   const handleLogout = useCallback(async () => {
     try {
       await profileService.signOut();
@@ -32,14 +30,12 @@ export const useProfileActions = () => {
     }
   }, [router]);
 
-  // Gestion de l'édition d'un champ
   const handleEdit = useCallback((field: FieldToEdit) => {
     setFieldToEdit(field);
     setNewValue(String(user?.[field] || ""));
     setModalVisible(true);
   }, [user]);
 
-  // Enregistrement des modifications
   const handleSave = useCallback(async () => {
     if (!user) return;
 
@@ -52,7 +48,6 @@ export const useProfileActions = () => {
     }
   }, [user, fieldToEdit, newValue, setUser]);
 
-  // Gestion du changement de photo
   const handleChangePhoto = useCallback(async () => {
     if (!user || !user.uid) return;
 
@@ -77,7 +72,6 @@ export const useProfileActions = () => {
     }
   }, [user, setUser]);
 
-  // Fermer le modal
   const closeModal = useCallback(() => {
     setModalVisible(false);
   }, []);

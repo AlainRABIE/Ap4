@@ -19,7 +19,6 @@ import { collection, getDocs, query, where, addDoc, Timestamp } from 'firebase/f
 import { getAuth } from 'firebase/auth';
 import { db } from '../../firebase/firebaseConfig';
 
-// Types
 type Exercice = {
   id: string;
   nom: string;
@@ -36,20 +35,17 @@ type Utilisateur = {
 };
 
 export default function CreerProgrammeScreen() {
-  // États du programme
   const [nomProgramme, setNomProgramme] = useState('');
   const [descriptionProgramme, setDescriptionProgramme] = useState('');
   const [dureeEnSemaines, setDureeEnSemaines] = useState('4');
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // États pour la sélection d'utilisateurs
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
   const [utilisateurSelectionne, setUtilisateurSelectionne] = useState<Utilisateur | null>(null);
   const [modalUtilisateurVisible, setModalUtilisateurVisible] = useState(false);
   const [rechercheUtilisateur, setRechercheUtilisateur] = useState('');
 
-  // États pour l'ajout d'exercices
   const [modalExerciceVisible, setModalExerciceVisible] = useState(false);
   const [nouvelExercice, setNouvelExercice] = useState({
     nom: '',
@@ -59,7 +55,6 @@ export default function CreerProgrammeScreen() {
     description: ''
   });
 
-  // Chargement des utilisateurs depuis Firebase
   useEffect(() => {
     const chargerUtilisateurs = async () => {
       try {
@@ -90,13 +85,10 @@ export default function CreerProgrammeScreen() {
     chargerUtilisateurs();
   }, []);
 
-  // Filtrer les utilisateurs selon la recherche
   const utilisateursFiltres = utilisateurs.filter(user => 
     user.nomComplet.toLowerCase().includes(rechercheUtilisateur.toLowerCase()) ||
     user.email.toLowerCase().includes(rechercheUtilisateur.toLowerCase())
   );
-
-  // Ajouter un exercice au programme
   const ajouterExercice = () => {
     if (!nouvelExercice.nom) {
       Alert.alert("Erreur", "Le nom de l'exercice est obligatoire.");
@@ -123,12 +115,10 @@ export default function CreerProgrammeScreen() {
     setModalExerciceVisible(false);
   };
 
-  // Supprimer un exercice du programme
   const supprimerExercice = (id: string) => {
     setExercices(exercices.filter(exercice => exercice.id !== id));
   };
 
-  // Enregistrer le programme complet - Version modifiée pour votre structure Firebase
   const enregistrerProgramme = async () => {
     try {
       if (!nomProgramme) {
@@ -155,7 +145,6 @@ export default function CreerProgrammeScreen() {
         return;
       }
 
-      // Créer un document pour chaque exercice dans la collection "programme"
       const promises = exercices.map(async (exercice) => {
         const exerciceData = {
           nom: exercice.nom,
@@ -166,7 +155,6 @@ export default function CreerProgrammeScreen() {
           utilisateurId: `/utilisateurs/${utilisateurSelectionne.id}`,
           dateCreation: Timestamp.now(),
           statut: "actif",
-          // Champs additionnels pour regrouper les exercices
           programmeNom: nomProgramme,
           programmeDuree: parseInt(dureeEnSemaines),
           programmeDescription: descriptionProgramme,
@@ -176,7 +164,6 @@ export default function CreerProgrammeScreen() {
         return await addDoc(collection(db, 'programme'), exerciceData);
       });
       
-      // Attendre que tous les exercices soient enregistrés
       await Promise.all(promises);
 
       Alert.alert(
@@ -186,7 +173,6 @@ export default function CreerProgrammeScreen() {
           { 
             text: "OK", 
             onPress: () => {
-              // Réinitialiser le formulaire
               setNomProgramme('');
               setDescriptionProgramme('');
               setDureeEnSemaines('4');

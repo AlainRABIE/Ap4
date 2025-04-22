@@ -19,7 +19,6 @@ import { getAuth } from 'firebase/auth';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-// Interface pour les données du rendez-vous
 interface Rendezvous {
   id: string;
   date: Timestamp;
@@ -33,7 +32,7 @@ interface Rendezvous {
     email?: string;
   };
   dateCreation: Timestamp;
-  formattedDate?: string; // Pour l'affichage
+  formattedDate?: string;
 }
 
 export default function RendezvousClientScreen() {
@@ -41,22 +40,19 @@ export default function RendezvousClientScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [rendezvous, setRendezvous] = useState<Rendezvous[]>([]);
   const [filteredRendezvous, setFilteredRendezvous] = useState<Rendezvous[]>([]);
-  const [filter, setFilter] = useState('upcoming'); // 'all', 'upcoming', 'past', 'cancelled'
+  const [filter, setFilter] = useState('upcoming');
   const [error, setError] = useState<string | null>(null);
   const [expandedRdv, setExpandedRdv] = useState<string | null>(null);
   const router = useRouter();
 
-  // Charger les rendez-vous au chargement de la page
   useEffect(() => {
     fetchRendezvous();
   }, []);
 
-  // Filtrer les rendez-vous quand le filtre change
   useEffect(() => {
     filterRendezvous();
   }, [filter, rendezvous]);
 
-  // Récupérer tous les rendez-vous de l'utilisateur
   const fetchRendezvous = async () => {
     try {
       setLoading(true);
@@ -69,7 +65,6 @@ export default function RendezvousClientScreen() {
         return;
       }
 
-      // Récupérer les rendez-vous où le client est l'utilisateur actuel
       const rdvRef = collection(db, 'rendezvous');
       const q = query(rdvRef, where('client', '==', doc(db, 'utilisateurs', user.uid)));
       const querySnapshot = await getDocs(q);
@@ -85,7 +80,6 @@ export default function RendezvousClientScreen() {
         let coachData: any = { id: '' };
 
         try {
-          // Récupérer les informations du coach
           if (rdvData.coach) {
             const coachRef = rdvData.coach;
             const coachDoc = await getDoc(coachRef);
@@ -104,7 +98,6 @@ export default function RendezvousClientScreen() {
           console.error("Erreur lors de la récupération des détails du coach:", err);
         }
 
-        // Formater la date pour l'affichage
         const date = rdvData.date.toDate();
         const formattedDate = formatDate(date);
 
@@ -121,17 +114,14 @@ export default function RendezvousClientScreen() {
 
       const rdvList = await Promise.all(rdvPromises);
 
-      // Trier les rendez-vous par date et heure
       rdvList.sort((a, b) => {
         const dateA = a.date.toDate();
         const dateB = b.date.toDate();
         
-        // Comparer d'abord les dates
         if (dateA.getTime() !== dateB.getTime()) {
           return dateA.getTime() - dateB.getTime();
         }
         
-        // Si les dates sont identiques, comparer les heures
         const timeA = a.horaire.split(':').map(Number);
         const timeB = b.horaire.split(':').map(Number);
         
@@ -154,7 +144,6 @@ export default function RendezvousClientScreen() {
     }
   };
 
-  // Formater la date pour l'affichage
   const formatDate = (date: Date): string => {
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
@@ -165,7 +154,6 @@ export default function RendezvousClientScreen() {
     return date.toLocaleDateString('fr-FR', options);
   };
 
-  // Filtrer les rendez-vous selon le filtre choisi
   const filterRendezvous = () => {
     if (!rendezvous.length) {
       setFilteredRendezvous([]);
@@ -193,18 +181,16 @@ export default function RendezvousClientScreen() {
       case 'cancelled':
         setFilteredRendezvous(rendezvous.filter(rdv => rdv.statut === 'annulé'));
         break;
-      default: // 'all'
+      default: 
         setFilteredRendezvous(rendezvous);
     }
   };
 
-  // Rafraîchir la liste des rendez-vous
   const onRefresh = () => {
     setRefreshing(true);
     fetchRendezvous();
   };
 
-  // Afficher les détails d'un rendez-vous
   const toggleRdvDetails = (rdvId: string) => {
     if (expandedRdv === rdvId) {
       setExpandedRdv(null);
@@ -213,7 +199,6 @@ export default function RendezvousClientScreen() {
     }
   };
 
-  // Regrouper les rendez-vous par date
   const groupedRendezvous = filteredRendezvous.reduce((groups, rdv) => {
     const date = rdv.formattedDate || '';
     if (!groups[date]) {
@@ -223,7 +208,6 @@ export default function RendezvousClientScreen() {
     return groups;
   }, {} as Record<string, Rendezvous[]>);
 
-  // Affichage pendant le chargement
   if (loading && !refreshing) {
     return (
       <View style={styles.centeredContainer}>
@@ -233,7 +217,6 @@ export default function RendezvousClientScreen() {
     );
   }
 
-  // Affichage en cas d'erreur
   if (error) {
     return (
       <View style={styles.centeredContainer}>
@@ -252,7 +235,6 @@ export default function RendezvousClientScreen() {
         <Text style={styles.headerTitle}>Mes Rendez-vous</Text>
       </View>
 
-      {/* Filtres de rendez-vous */}
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false} 
@@ -292,7 +274,6 @@ export default function RendezvousClientScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Bouton pour prendre un nouveau rendez-vous */}
       <TouchableOpacity 
         style={styles.newAppointmentButton}
         onPress={() => router.push('/coach')}
@@ -301,7 +282,6 @@ export default function RendezvousClientScreen() {
         <Text style={styles.newAppointmentText}>Prendre un nouveau rendez-vous</Text>
       </TouchableOpacity>
 
-      {/* Liste des rendez-vous */}
       <ScrollView 
         style={styles.scrollContainer}
         contentContainerStyle={styles.contentContainer}

@@ -30,7 +30,7 @@ userId: string, fieldName: string, newValue: string  ): Promise<void> {
     color: string;
   } {
     const weightNum = parseFloat(String(weight));
-    const heightNum = parseFloat(String(height)) / 100; // Convertir cm en m
+    const heightNum = parseFloat(String(height)) / 100;
     
     if (!weightNum || !heightNum) {
       return { bmi: "", category: "", color: "" };

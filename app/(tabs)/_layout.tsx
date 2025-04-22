@@ -82,7 +82,6 @@ function MyTabs({ userRole }: { userRole: string | null }) {
             tabBarIcon: ({ size, color, focused }) => <TabBarIcon name="person" size={size} color={color} focused={focused} />,
           }}
         />
-        {/* Pages cachées pour l'admin */}
         <Tabs.Screen name="Exercice" options={{ href: null }} />
         <Tabs.Screen name="coach" options={{ href: null }} />
         <Tabs.Screen name="home" options={{ href: null }} />

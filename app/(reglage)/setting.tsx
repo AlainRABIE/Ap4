@@ -35,17 +35,14 @@ export default function Settings() {
         `Cordialement,\n${user.displayName || user.email}`
       );
       
-      // Construction de l'URL mailto
       const mailtoUrl = `mailto:rabie.alain001@gmail.com?subject=${subject}&body=${body}`;
       
-      // Vérification que le lien peut être ouvert
       const canOpen = await Linking.canOpenURL(mailtoUrl);
       
       if (!canOpen) {
         throw new Error("Impossible d'ouvrir l'application de messagerie");
       }
       
-      // Ouverture de l'application de messagerie par défaut
       await Linking.openURL(mailtoUrl);
       
     } catch (error) {
@@ -78,7 +75,6 @@ export default function Settings() {
     }
   };
 
-  // Fonction pour gérer la connexion des appareils
   const handleConnectDevice = (deviceType: string) => {
     Alert.alert(
       'Connexion appareil',

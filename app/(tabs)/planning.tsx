@@ -26,14 +26,12 @@ export default function PlanningScreen() {
   const [saveButtonOpacity] = useState(new Animated.Value(0));
   const [hasChanges, setHasChanges] = useState(false);
   
-  // Statuts possibles: 0 = non défini, 1 = disponible, 2 = occupé
   const STATUS = {
     UNDEFINED: 0,
     AVAILABLE: 1,
     BUSY: 2
   };
 
-  // Animation pour le bouton d'enregistrement
   useEffect(() => {
     if (hasChanges) {
       setSaveButtonVisible(true);
@@ -56,7 +54,7 @@ export default function PlanningScreen() {
   const getDatesForSelectedWeek = () => {
     const dates = [];
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
+    const dayOfWeek = today.getDay(); 
     const startDate = new Date(today);
     
     startDate.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); 
@@ -70,7 +68,6 @@ export default function PlanningScreen() {
     return dates;
   };
 
-  // Générer des créneaux horaires de 8h à 20h
   const getTimeSlots = () => {
     const slots = [];
     for (let hour = 8; hour <= 20; hour++) {
@@ -82,7 +79,6 @@ export default function PlanningScreen() {
   const dates = getDatesForSelectedWeek();
   const timeSlots = getTimeSlots();
   
-  // Initialiser l'état des disponibilités (0 = non défini, 1 = disponible, 2 = occupé)
   const [availability, setAvailability] = useState(() => {
     return timeSlots.map(() => Array(7).fill(STATUS.UNDEFINED));
   });
@@ -145,7 +141,6 @@ export default function PlanningScreen() {
     }
   };
 
-  // Naviguer vers la semaine suivante
   const goToNextWeek = () => {
     if (hasChanges) {
       Alert.alert(
@@ -178,7 +173,6 @@ export default function PlanningScreen() {
     }
   };
 
-  // Retourner à la semaine actuelle
   const goToCurrentWeek = () => {
     if (hasChanges && currentWeekOffset !== 0) {
       Alert.alert(
@@ -211,7 +205,6 @@ export default function PlanningScreen() {
     }
   };
 
-  // Formatage de date pour l'affichage
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
   };
@@ -220,7 +213,6 @@ export default function PlanningScreen() {
     return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   };
 
-  // Charger les disponibilités depuis Firebase
   const loadAvailabilities = async () => {
     try {
       setLoading(true);
@@ -232,36 +224,28 @@ export default function PlanningScreen() {
         return;
       }
 
-      // Initialiser un tableau vide pour les disponibilités
       const newAvailability = timeSlots.map(() => Array(7).fill(STATUS.UNDEFINED));
 
-      // Pour chaque date de la semaine actuelle
       for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
         const currentDate = dates[dateIndex];
         const cleanDate = new Date(currentDate);
         cleanDate.setHours(0, 0, 0, 0);
         
-        // Pour chaque créneau horaire
         for (let timeIndex = 0; timeIndex < timeSlots.length; timeIndex++) {
           const timeSlot = timeSlots[timeIndex];
           
-          // Construire une date précise pour ce créneau (date + heure)
           const slotDateTime = new Date(currentDate);
           const [hours, minutes] = timeSlot.split(':');
           slotDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10) || 0, 0, 0);
           
-          // Créer l'ID du document que nous recherchons
           const docId = `${user.uid}_${cleanDate.toISOString().split('T')[0]}_${timeSlot}`;
           
-          // Récupérer directement le document par son ID
           try {
             const docRef = doc(db, 'disponibilite', docId);
             const docSnap = await getDoc(docRef);
             
             if (docSnap.exists()) {
               const data = docSnap.data();
-              // Si dispo = 1, c'est disponible (vert)
-              // Si dispo = 0, c'est occupé (rouge)
               if (data.dispo === 1) {
                 newAvailability[timeIndex][dateIndex] = STATUS.AVAILABLE;
               } else if (data.dispo === 0) {
@@ -275,7 +259,6 @@ export default function PlanningScreen() {
       }
       
       setAvailability(newAvailability);
-      // Stocker une copie de l'état original pour détecter les modifications
       setOriginalAvailability(JSON.parse(JSON.stringify(newAvailability)));
       setHasChanges(false);
       
@@ -302,52 +285,41 @@ export default function PlanningScreen() {
         return;
       }
 
-      // Parcourir toutes les dates
       for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
-        // Pour chaque date, vérifier les créneaux horaires
         const currentDate = dates[dateIndex];
-        // Réinitialiser la date à minuit pour avoir une date propre sans heures
         const cleanDate = new Date(currentDate);
         cleanDate.setHours(0, 0, 0, 0);
         
-        // Pour chaque créneau horaire de cette date
         for (let timeIndex = 0; timeIndex < timeSlots.length; timeIndex++) {
           const timeSlot = timeSlots[timeIndex];
           const status = availability[timeIndex][dateIndex];
           
-          // Construire une date précise pour ce créneau (date + heure)
           const slotDateTime = new Date(currentDate);
           const [hours, minutes] = timeSlot.split(':');
           slotDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10) || 0, 0, 0);
           
-          // Créer un ID pour ce document basé sur l'ID utilisateur, la date et l'heure
           const docId = `${user.uid}_${cleanDate.toISOString().split('T')[0]}_${timeSlot}`;
           
-          // Enregistrer la disponibilité selon le statut du créneau
           if (status === STATUS.AVAILABLE) {
-            // Si disponible (vert), enregistrer dispo = 1
             await setDoc(doc(db, 'disponibilite', docId), {
               coach: doc(db, 'utilisateurs', user.uid),
               dates: Timestamp.fromDate(slotDateTime),
-              dispo: 1  // 1 = disponible
+              dispo: 1 
             });
           } else if (status === STATUS.BUSY) {
-            // Si occupé (rouge), enregistrer dispo = 0
             await setDoc(doc(db, 'disponibilite', docId), {
               coach: doc(db, 'utilisateurs', user.uid),
               dates: Timestamp.fromDate(slotDateTime),
-              dispo: 0  // 0 = indisponible
+              dispo: 0  
             });
           } else {
-            // Si non défini, ne rien faire ou supprimer l'entrée existante si elle existe
             try {
               const existingDoc = await getDoc(doc(db, 'disponibilite', docId));
               if (existingDoc.exists()) {
-                // Si le document existe déjà, on le supprime
                 await setDoc(doc(db, 'disponibilite', docId), {
                   coach: doc(db, 'utilisateurs', user.uid),
                   dates: Timestamp.fromDate(slotDateTime),
-                  dispo: null  // valeur null pour les créneaux non définis
+                  dispo: null 
                 });
               }
             } catch (err) {
@@ -357,7 +329,6 @@ export default function PlanningScreen() {
         }
       }
       
-      // Mettre à jour l'état original après sauvegarde
       setOriginalAvailability(JSON.parse(JSON.stringify(availability)));
       setHasChanges(false);
       
@@ -383,7 +354,6 @@ export default function PlanningScreen() {
     }
   };
 
-  // Texte à afficher selon le statut
   const getCellText = (status: any) => {
     switch(status) {
       case STATUS.AVAILABLE:
@@ -403,7 +373,6 @@ export default function PlanningScreen() {
           <Text style={styles.title}>Planning de Disponibilités</Text>
         </View>
         
-        {/* Navigation entre les semaines */}
         <View style={styles.weekNavigation}>
           <TouchableOpacity onPress={goToPreviousWeek} style={styles.navButton}>
             <Ionicons name="chevron-back" size={20} color="#3b82f6" />
@@ -420,7 +389,6 @@ export default function PlanningScreen() {
           </TouchableOpacity>
         </View>
         
-        {/* Affichage de la période */}
         <View style={styles.periodContainer}>
           <Text style={styles.periodText}>
             {formatMonthYear(dates[0])}
@@ -439,7 +407,6 @@ export default function PlanningScreen() {
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.tableContainer}>
             <View>
-              {/* En-tête du tableau */}
               <View style={styles.headerRow}>
                 <View style={styles.headerCell}>
                   <Text style={styles.headerText}>Horaire</Text>
@@ -454,7 +421,6 @@ export default function PlanningScreen() {
                 ))}
               </View>
               
-              {/* Lignes du tableau */}
               {timeSlots.map((time, timeIndex) => (
                 <View key={timeIndex} style={styles.row}>
                   <View style={styles.timeCell}>
@@ -496,7 +462,6 @@ export default function PlanningScreen() {
           </View>
         </View>
 
-        {/* Bouton d'enregistrement flottant */}
         {isSaveButtonVisible && (
           <Animated.View style={[styles.saveButtonContainer, { opacity: saveButtonOpacity }]}>
             <TouchableOpacity 
@@ -618,13 +583,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   todayColumn: {
-    backgroundColor: '#f0f9ff',  // Légère teinte bleue pour aujourd'hui
+    backgroundColor: '#f0f9ff', 
   },
   availableCell: {
-    backgroundColor: '#d1fae5', // Vert clair
+    backgroundColor: '#d1fae5', 
   },
   busyCell: {
-    backgroundColor: '#fee2e2', // Rouge clair
+    backgroundColor: '#fee2e2', 
   },
   availableText: {
     color: '#059669',

@@ -30,17 +30,14 @@ export default function ForfaitPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Basic validation
         if (!newForfait.name || newForfait.price <= 0 || newForfait.numberOfSessions <= 0) {
             alert("Erreur: Veuillez remplir tous les champs correctement");
             return;
         }
         
-        // Add new forfait to the list with a unique id
         const forfaitWithId = { ...newForfait, id: Date.now().toString() };
         setForfaits([...forfaits, forfaitWithId]);
         
-        // Reset form
         setNewForfait({
             name: '',
             price: 0,

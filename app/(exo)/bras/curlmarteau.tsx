@@ -12,7 +12,6 @@ export default function CurlMarteau() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {/* Header avec bouton retour */}
         <LinearGradient
           colors={['#FF6A88', '#FF8E53']}
           start={{ x: 0, y: 0 }}
@@ -28,7 +27,6 @@ export default function CurlMarteau() {
           <View style={styles.placeholder} />
         </LinearGradient>
 
-        {/* Image de démonstration */}
         <View style={styles.imageContainer}>
           <Image
             source={require('../../../assets/images/biceps.png')}
@@ -37,9 +35,7 @@ export default function CurlMarteau() {
           />
         </View>
 
-        {/* Section principale */}
         <View style={styles.contentContainer}>
-          {/* Description de l'exercice */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="information-circle-outline" size={22} color="#FF6A88" />
@@ -50,7 +46,6 @@ export default function CurlMarteau() {
             </Text>
           </View>
 
-          {/* Exécution */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="list-outline" size={22} color="#FF6A88" />
@@ -114,7 +109,6 @@ export default function CurlMarteau() {
             </View>
           </View>
 
-          {/* Conseils */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="bulb-outline" size={22} color="#FF6A88" />
@@ -146,7 +140,6 @@ export default function CurlMarteau() {
             </View>
           </View>
 
-          {/* Muscles sollicités */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="body-outline" size={22} color="#FF6A88" />
@@ -166,7 +159,6 @@ export default function CurlMarteau() {
             </View>
           </View>
 
-          {/* Programme recommandé */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="calendar-outline" size={22} color="#FF6A88" />
@@ -192,7 +184,6 @@ export default function CurlMarteau() {
             </View>
           </View>
 
-          {/* Variantes */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="options-outline" size={22} color="#FF6A88" />
@@ -218,7 +209,6 @@ export default function CurlMarteau() {
             </View>
           </View>
 
-          {/* Erreurs à éviter */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="alert-circle-outline" size={22} color="#FF6A88" />

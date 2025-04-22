@@ -244,7 +244,7 @@ export const styles = StyleSheet.create({
     marginLeft: 10,
   },
   bottomSpacer: {
-    height: 80, // Ajustez cette valeur en fonction de la hauteur de votre menubar
+    height: 80, 
   },
   center: {
     flex: 1,

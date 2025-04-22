@@ -18,8 +18,8 @@ const subscriptions = [
 ];
 
 export default function ExercisesScreen() {
-  const router = useRouter(); // Initialiser le hook de navigation
-  const [showSubscriptions, setShowSubscriptions] = useState(false); // État pour afficher ou masquer les abonnements
+  const router = useRouter(); 
+  const [showSubscriptions, setShowSubscriptions] = useState(false); 
 
   const toggleSubscriptions = () => {
     setShowSubscriptions(!showSubscriptions);
@@ -86,7 +86,6 @@ export default function ExercisesScreen() {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Fond semi-transparent
+    backgroundColor: "rgba(0, 0, 0, 0.5)", 
     justifyContent: "center",
     alignItems: "center",
   },

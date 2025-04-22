@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, query, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
 import { styles as baseStyles } from '@/style/profil/profilStyles';
+import { useRouter } from 'expo-router';
 
 const styles = {
   ...baseStyles,
@@ -63,7 +64,7 @@ const styles = {
     borderRadius: 10,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    width: '30%' as any,
+    width: '48%' as any,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -186,7 +187,6 @@ const styles = {
 };
 
 export default function AdminDashboard() {
-  // Interface pour définir le type des logs
   interface LogEntry {
     type: string;
     message: string;
@@ -194,7 +194,6 @@ export default function AdminDashboard() {
     id: string;
   }
   
-  // Interface pour définir le type des activités
   interface Activity {
     id: string;
     type: string;
@@ -203,7 +202,8 @@ export default function AdminDashboard() {
     timestamp: any;
   }
 
-  // États pour stocker les données
+  const router = useRouter();
+
   const [databaseLogs, setDatabaseLogs] = useState<LogEntry[]>([]);
   const [userCount, setUserCount] = useState(0);
   const [coachCount, setCoachCount] = useState(0);
@@ -211,7 +211,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
 
-  // Fonction pour obtenir l'icône correspondant au type de log
   const getLogIcon = (type: string) => {
     switch (type) {
       case 'error':
@@ -224,7 +223,6 @@ export default function AdminDashboard() {
     }
   };
   
-  // Fonction pour formater la date
   const formatDate = (timestamp: string | number | Date | any) => {
     if (!timestamp) return '';
     
@@ -237,10 +235,8 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fonction pour récupérer les statistiques
   const fetchStats = async () => {
     try {
-      // Compter les utilisateurs par rôle
       const usersRef = collection(db, 'utilisateurs');
       const usersSnapshot = await getDocs(usersRef);
       
@@ -259,14 +255,12 @@ export default function AdminDashboard() {
       setUserCount(users);
       setCoachCount(coaches);
       
-      // Compter les séances
       const sessionRef = collection(db, 'programme');
       const sessionSnapshot = await getDocs(sessionRef);
       setSessionCount(sessionSnapshot.size);
       
     } catch (error: any) {
       console.error("Erreur lors de la récupération des statistiques:", error);
-      // Ajouter l'erreur aux logs
       setDatabaseLogs(prevLogs => [
         {
           type: 'error',
@@ -279,10 +273,8 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fonction pour récupérer les activités récentes et les logs
   const fetchActivities = async () => {
     try {
-      // Récupérer les dernières connexions utilisateurs
       const usersRef = collection(db, 'utilisateurs');
       const usersQuery = query(usersRef, orderBy('derniereConnexion', 'desc'), limit(10));
       const usersSnapshot = await getDocs(usersQuery);
@@ -300,9 +292,6 @@ export default function AdminDashboard() {
       
       setRecentActivities(activities);
       
-      // Générer des logs à partir des activités
-      
-      // Logs d'activité de connexion
       const logs: LogEntry[] = [];
       activities.slice(0, 5).forEach(activity => {
         logs.push({
@@ -313,7 +302,6 @@ export default function AdminDashboard() {
         });
       });
       
-      // Récupérer les modifications récentes
       const modifiedUsersQuery = query(usersRef, orderBy('dateModification', 'desc'), limit(5));
       const modifiedUsersSnapshot = await getDocs(modifiedUsersQuery);
       
@@ -327,7 +315,6 @@ export default function AdminDashboard() {
         });
       });
       
-      // Trier les logs par date
       logs.sort((a, b) => {
         const dateA = new Date(a.timestamp);
         const dateB = new Date(b.timestamp);
@@ -349,17 +336,14 @@ export default function AdminDashboard() {
     }
   };
   
-  // Charger les données au chargement du composant
   useEffect(() => {
     fetchStats();
     fetchActivities();
     
-    // Mettre en place un écouteur pour les changements dans la collection utilisateurs
     const usersRef = collection(db, 'utilisateurs');
     const unsubscribe = onSnapshot(usersRef, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
-          // Nouvel utilisateur ajouté
           setDatabaseLogs(prevLogs => [{
             type: 'info',
             message: `Nouvel utilisateur: ${change.doc.data().nomComplet || change.doc.data().email}`,
@@ -368,7 +352,6 @@ export default function AdminDashboard() {
           }, ...prevLogs]);
         }
         if (change.type === "modified") {
-          // Utilisateur modifié
           setDatabaseLogs(prevLogs => [{
             type: 'warning',
             message: `Utilisateur modifié: ${change.doc.data().nomComplet || change.doc.data().email}`,
@@ -378,11 +361,9 @@ export default function AdminDashboard() {
         }
       });
       
-      // Mettre à jour les comptes
       fetchStats();
     });
     
-    // Nettoyer l'écouteur
     return () => unsubscribe();
   }, []);
   
@@ -415,19 +396,20 @@ export default function AdminDashboard() {
         <Text style={styles.sectionTitle}>Accès rapide</Text>
         
         <View style={styles.quickAccessContainer}>
-          <TouchableOpacity style={styles.quickAccessButton}>
+          <TouchableOpacity 
+            style={styles.quickAccessButton}
+            onPress={() => router.push('/Listutilisateur')}
+          >
             <Ionicons name="people" size={24} color="#FF6A88" />
             <Text style={styles.quickAccessText}>Gestion des utilisateurs</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.quickAccessButton}>
+          <TouchableOpacity 
+            style={styles.quickAccessButton}
+            onPress={() => router.push('/Listcoach')}
+          >
             <Ionicons name="school" size={24} color="#FF6A88" />
             <Text style={styles.quickAccessText}>Liste des coachs</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.quickAccessButton}>
-            <Ionicons name="settings" size={24} color="#FF6A88" />
-            <Text style={styles.quickAccessText}>Paramètres</Text>
           </TouchableOpacity>
         </View>
         

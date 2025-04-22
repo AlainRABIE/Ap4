@@ -142,7 +142,6 @@ export default function AdminProfile() {
 
       uploadTask.on('state_changed', 
         (snapshot) => {
-          // Progression du téléchargement si nécessaire
         },
         (error) => {
           Alert.alert('Erreur', 'Échec du téléchargement de l\'image');

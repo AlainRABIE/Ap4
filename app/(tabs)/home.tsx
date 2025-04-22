@@ -432,7 +432,6 @@ const NutritionScreen = () => {
               </View>
             </TouchableOpacity>
             
-            {/* Déjeuner */}
             <TouchableOpacity 
               style={styles.mealRow}
               onPress={() => navigateToAddMeal("Déjeuner")}
@@ -479,7 +478,6 @@ const NutritionScreen = () => {
               </View>
             </TouchableOpacity>
             
-            {/* Dîner */}
             <TouchableOpacity 
               style={styles.mealRow}
               onPress={() => navigateToAddMeal("Dîner")}
@@ -526,7 +524,6 @@ const NutritionScreen = () => {
               </View>
             </TouchableOpacity>
             
-            {/* Collation */}
             <TouchableOpacity 
               style={[styles.mealRow, {borderBottomWidth: 0}]}
               onPress={() => navigateToAddMeal("Collation")}
@@ -575,7 +572,6 @@ const NutritionScreen = () => {
           </View>
         </View>
         
-        {/* Section activité physique */}
         <View style={styles.cardContainer}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleContainer}>
