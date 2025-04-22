@@ -195,7 +195,6 @@ export default function EditUtilisateur() {
         <Text style={styles.title}>Modifier le profil</Text>
       </View>
 
-      {/* Photo de profil */}
       <View style={styles.profileImageContainer}>
         {image ? (
           <Image source={{ uri: image }} style={styles.profileImage} />
@@ -262,7 +261,6 @@ export default function EditUtilisateur() {
         </View>
       </View>
 
-      {/* Adresse */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Adresse</Text>
         <View style={styles.fieldContainer}>
@@ -300,7 +298,6 @@ export default function EditUtilisateur() {
         </View>
       </View>
 
-      {/* Bouton de sauvegarde */}
       <TouchableOpacity
         style={styles.saveButton}
         onPress={saveChanges}
@@ -316,7 +313,6 @@ export default function EditUtilisateur() {
         )}
       </TouchableOpacity>
       
-      {/* Espace en bas pour le scroll */}
       <View style={{ height: 40 }} />
     </ScrollView>
   );

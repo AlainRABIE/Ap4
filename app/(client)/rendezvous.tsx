@@ -388,7 +388,6 @@ export default function RendezVousScreen() {
       
       <Text style={styles.sectionTitle}>Choisissez un horaire</Text>
       
-      {/* Liste des horaires disponibles */}
       <ScrollView contentContainerStyle={styles.timesContainer}>
         {!selectedDate ? (
           <Text style={styles.noDataText}>Sélectionnez une date</Text>
@@ -427,7 +426,6 @@ export default function RendezVousScreen() {
         )}
       </ScrollView>
       
-      {/* Bouton de confirmation */}
       <TouchableOpacity
         style={[
           styles.confirmButton,

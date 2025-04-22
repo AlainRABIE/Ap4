@@ -33,7 +33,6 @@ export default function ExercisesScreen() {
 
   return (
     <View style={styles.container}>
-      {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Exercises</Text>
         <View style={styles.upgradeBox}>
@@ -60,7 +59,6 @@ export default function ExercisesScreen() {
         )}
       />
 
-      {/* Modal pour les abonnements */}
       <Modal
         visible={showSubscriptions}
         transparent={true}

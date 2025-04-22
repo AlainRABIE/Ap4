@@ -97,17 +97,15 @@ export default function Settings() {
 
   return (
     <View style={styles.container}>
-      {/* Header avec bouton retour */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={28} color="#333" />
         </TouchableOpacity>
         <Text style={styles.title}>Réglages</Text>
-        <View style={{ width: 28 }} /> {/* Pour centrer le titre */}
+        <View style={{ width: 28 }} /> 
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* Section Profil */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MaterialIcons name="person" size={24} color="#3b82f6" />
@@ -140,7 +138,6 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-        {/* Section Objectifs */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <FontAwesome name="balance-scale" size={24} color="#22c55e" />
@@ -163,7 +160,6 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-        {/* Section Podomètre */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MaterialIcons name="directions-walk" size={24} color="#ef4444" />
@@ -183,7 +179,6 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Section Appareils Connectés */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MaterialIcons name="watch" size={24} color="#8b5cf6" />
@@ -224,7 +219,6 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-        {/* Section Support */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MaterialIcons name="help" size={24} color="#6b7280" />

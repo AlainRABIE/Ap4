@@ -137,7 +137,6 @@ export default function AddMeal() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* En-tête avec bouton retour */}
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -149,7 +148,6 @@ export default function AddMeal() {
             <View style={{ width: 24 }} />
           </View>
 
-          {/* Type de repas et date */}
           <View style={styles.mealInfoContainer}>
             <View style={styles.mealTypeWrapper}>
               <Ionicons
@@ -175,7 +173,6 @@ export default function AddMeal() {
             </View>
           </View>
 
-          {/* Formulaire */}
           <View style={styles.formContainer}>
             <TextInput
               mode="outlined"
@@ -204,7 +201,6 @@ export default function AddMeal() {
             />
           </View>
 
-          {/* Section photo */}
           <View style={styles.photoSection}>
             <Text style={styles.sectionTitle}>Photo de l'aliment</Text>
 
@@ -226,7 +222,6 @@ export default function AddMeal() {
               </TouchableOpacity>
             </View>
 
-            {/* Aperçu de la photo */}
             {photo && (
               <View style={styles.photoPreviewContainer}>
                 <Image source={{ uri: photo }} style={styles.photoPreview} />
@@ -240,7 +235,6 @@ export default function AddMeal() {
             )}
           </View>
 
-          {/* Bouton de confirmation */}
           <TouchableOpacity
             style={styles.confirmButton}
             onPress={handleConfirm}

@@ -199,7 +199,6 @@ export default function CreerProgrammeScreen() {
       <ScrollView style={styles.scrollView}>
         <Text style={styles.title}>Créer un Programme Personnalisé</Text>
 
-        {/* Sélection de l'utilisateur */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. Sélectionner un client</Text>
           <TouchableOpacity 
@@ -214,7 +213,6 @@ export default function CreerProgrammeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Informations du programme */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. Informations du programme</Text>
           
@@ -245,7 +243,6 @@ export default function CreerProgrammeScreen() {
           />
         </View>
 
-        {/* Liste des exercices */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>3. Exercices</Text>
           
@@ -282,7 +279,6 @@ export default function CreerProgrammeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Bouton d'enregistrement */}
         <TouchableOpacity 
           style={[styles.saveButton, loading && styles.disabledButton]}
           onPress={enregistrerProgramme}
@@ -294,7 +290,6 @@ export default function CreerProgrammeScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal de sélection d'utilisateur */}
       <Modal
         visible={modalUtilisateurVisible}
         animationType="slide"
@@ -347,7 +342,6 @@ export default function CreerProgrammeScreen() {
         </View>
       </Modal>
 
-      {/* Modal d'ajout d'exercice */}
       <Modal
         visible={modalExerciceVisible}
         animationType="slide"
