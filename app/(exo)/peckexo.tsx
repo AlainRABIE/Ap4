@@ -1,14 +1,26 @@
-import React from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, SafeAreaView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 
-const peckExercises = [
+const peckExercises: Array<{
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;
+  rest?: string;
+  notes: string;
+  icon: "barbell-outline" | "fitness-outline" | "body-outline" | "footsteps-outline";
+}> = [
   {
     id: "1",
     name: "Développé Couché Haltère",
     sets: 3,
     reps: "6-8",
+    rest: "2 min 30",
     notes: "3 séries de 6-8 répétitions avec 2min30 de repos",
+    icon: "barbell-outline",
   },
   {
     id: "2",
@@ -16,6 +28,7 @@ const peckExercises = [
     sets: 4,
     reps: "8-12",
     notes: "4 séries de 8-12 répétitions",
+    icon: "fitness-outline",
   },
   {
     id: "3",
@@ -23,91 +36,232 @@ const peckExercises = [
     sets: 4,
     reps: "8-12",
     notes: "4 séries de 8-12 répétitions",
+    icon: "body-outline",
   },
 ];
 
 export default function PeckExercises() {
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  
+  const toggleExpand = (id: string) => {
+    setExpandedItem(expandedItem === id ? null : id);
+  };
+
+  const goBack = () => {
+    router.back();
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Programme Pectoraux</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      <LinearGradient
+        colors={['#FF6A88', '#FF8E53']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.header}
+      >
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Programme Pectoraux</Text>
+        <TouchableOpacity style={styles.infoButton}>
+          <Ionicons name="information-circle-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </LinearGradient>
+      
       <FlatList
         data={peckExercises}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <View style={styles.exerciseItem}>
-            <View style={styles.exerciseHeader}>
-              <Text style={styles.exerciseName}>{item.name}</Text>
-              <Ionicons name="barbell" size={24} color="#007AFF" />
-            </View>
-            <Text style={styles.exerciseDetails}>
-              {item.sets} séries de {item.reps} répétitions
-            </Text>
-            <Text style={styles.exerciseNotes}>{item.notes}</Text>
-          </View>
+          <TouchableOpacity 
+            style={[styles.exerciseItem, expandedItem === item.id && styles.expandedItem]} 
+            onPress={() => toggleExpand(item.id)}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.95)']}
+              style={styles.exerciseGradient}
+            >
+              <View style={styles.exerciseHeader}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name={item.icon} size={22} color="#FF6A88" />
+                </View>
+                <Text style={styles.exerciseName}>{item.name}</Text>
+                <Ionicons 
+                  name={expandedItem === item.id ? "chevron-up" : "chevron-down"} 
+                  size={22} 
+                  color="#FF6A88" 
+                />
+              </View>
+              
+              <View style={styles.setContainer}>
+                {Array.from({ length: item.sets }).map((_, idx) => (
+                  <View key={idx} style={styles.setDot} />
+                ))}
+                <Text style={styles.setsText}>{item.sets} séries</Text>
+              </View>
+
+              {expandedItem === item.id && (
+                <View style={styles.detailsContainer}>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="repeat-outline" size={16} color="#B0BEC5" />
+                    <Text style={styles.detailText}>{item.reps} répétitions</Text>
+                  </View>
+                  {item.rest && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="timer-outline" size={16} color="#B0BEC5" />
+                      <Text style={styles.detailText}>Repos: {item.rest}</Text>
+                    </View>
+                  )}
+                  <View style={styles.detailRow}>
+                    <Ionicons name="document-text-outline" size={16} color="#B0BEC5" />
+                    <Text style={styles.detailText}>{item.notes}</Text>
+                  </View>
+                </View>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
         )}
         ListFooterComponent={() => (
-          <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>Commencer l'entraînement</Text>
+          <TouchableOpacity
+            style={styles.startButtonContainer}
+          >
+            <LinearGradient
+              colors={['#FF6A88', '#FF8E53']}
+              style={styles.startButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Ionicons name="play-circle" size={22} color="#fff" />
+              <Text style={styles.startButtonText}>Commencer l'entraînement</Text>
+            </LinearGradient>
           </TouchableOpacity>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f0f4f8",
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  backButton: {
+    padding: 8,
+  },
+  infoButton: {
+    padding: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
-    color: "#333",
+    color: "#fff",
+  },
+  listContent: {
+    padding: 16,
   },
   exerciseItem: {
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowRadius: 3.84,
     elevation: 3,
+  },
+  expandedItem: {
+    marginBottom: 20,
+  },
+  exerciseGradient: {
+    padding: 16,
   },
   exerciseHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    justifyContent: "space-between",
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 106, 136, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   exerciseName: {
-    fontSize: 20,
+    flex: 1,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#007AFF",
+    color: "#333",
+    marginLeft: 12,
   },
-  exerciseDetails: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 4,
+  setContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
   },
-  exerciseNotes: {
+  setDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6A88',
+    marginRight: 4,
+  },
+  setsText: {
+    marginLeft: 8,
+    color: '#78909C',
     fontSize: 14,
-    color: "#888",
+  },
+  detailsContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailText: {
+    color: '#546E7A',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  startButtonContainer: {
+    marginTop: 20,
+    marginBottom: 40,
   },
   startButton: {
-    marginTop: 20,
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 16,
+    borderRadius: 30,
+    elevation: 5,
   },
   startButtonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
+    marginLeft: 8,
   },
 });

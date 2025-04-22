@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, SafeAreaView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 
 const legExercises: Array<{
   id: string;
@@ -54,6 +55,10 @@ export default function LegExercises() {
     setExpandedItem(expandedItem === id ? null : id);
   };
 
+  const goBack = () => {
+    router.back();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -64,7 +69,7 @@ export default function LegExercises() {
         end={{ x: 1, y: 0 }}
         style={styles.header}
       >
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Programme Jambes</Text>
