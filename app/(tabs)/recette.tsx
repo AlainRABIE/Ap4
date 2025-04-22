@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const RECIPE_CARD_WIDTH = width - 32;
@@ -26,6 +27,7 @@ const commonIngredients = [
 ];
 
 const RecettePage = () => {
+  const router = useRouter();
   const [recipes, setRecipes] = useState<{ idMeal: string; strMeal: string; strCategory: string; strMealThumb: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [ingredients, setIngredients] = useState('');
@@ -132,10 +134,15 @@ const RecettePage = () => {
     searchRecipes();
   };
 
+  const navigateToRecipeDetail = (recipeId: string) => {
+    router.push(`/(calorie)/RecetteDetail?id=${recipeId}`);
+  };
+
   const renderRecipeCard = ({ item }: { item: any }) => (
     <TouchableOpacity 
       style={styles.recipeCard}
       activeOpacity={0.8}
+      onPress={() => navigateToRecipeDetail(item.idMeal)}
     >
       <Image 
         source={{ uri: item.strMealThumb }}
