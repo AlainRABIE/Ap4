@@ -28,7 +28,8 @@ export default function AdminProfile() {
     createdAt: '',
     lastLogin: '',
     photoURL: 'https://www.gravatar.com/avatar/?d=mp',
-    sessionPrice: '0'
+    sessionPrice: '0',
+    niveauActivite: '' // Ajout du niveau d'activité
   });
   const [loading, setLoading] = useState(true);
   const [editingPrice, setEditingPrice] = useState(false);
@@ -48,7 +49,8 @@ export default function AdminProfile() {
             createdAt: user.metadata.creationTime || 'Non disponible',
             lastLogin: user.metadata.lastSignInTime || 'Non disponible',
             photoURL: user.photoURL || 'https://www.gravatar.com/avatar/?d=mp',
-            sessionPrice: data.sessionPrice || '0'
+            sessionPrice: data.sessionPrice || '0',
+            niveauActivite: data.niveauActivite || 'Non renseigné'
           });
           setSessionPrice(data.sessionPrice || '0');
         }
@@ -210,6 +212,12 @@ export default function AdminProfile() {
             <Ionicons name="person-outline" size={20} color="#666" />
             <Text style={styles.infoLabel}>Rôle:</Text>
             <Text style={styles.infoValue}>Coach</Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Ionicons name="fitness-outline" size={20} color="#666" />
+            <Text style={styles.infoLabel}>Niveau d'activité:</Text>
+            <Text style={styles.infoValue}>{userData.niveauActivite || 'Non renseigné'}</Text>
           </View>
           
           <View style={styles.infoRow}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -10,7 +10,7 @@ import {
     Keyboard,
 } from 'react-native';
 import { TextInput, Button, RadioButton } from 'react-native-paper';
-import { getFirestore, doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { saveUserProfile } from '../../services/calorie';
 import app from '../../firebase/firebaseConfig';
@@ -26,6 +26,39 @@ const ProfileData = () => {
     const [age, setAge] = useState('');
     const [sexe, setSexe] = useState('homme');
     const [niveauActivite, setNiveauActivite] = useState('sedentaire');
+    const [nomComplet, setNomComplet] = useState('');
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    Alert.alert('Erreur', 'Aucun utilisateur connecté.');
+                    return;
+                }
+
+                const userDocRef = doc(db, 'utilisateurs', user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.nomComplet) {
+                        setNomComplet(userData.nomComplet);
+                    }
+                    
+                    if (userData.poids) setPoids(userData.poids.toString());
+                    if (userData.taille) setTaille(userData.taille.toString());
+                    if (userData.age) setAge(userData.age.toString());
+                    if (userData.sexe) setSexe(userData.sexe);
+                    if (userData.niveauActivite) setNiveauActivite(userData.niveauActivite);
+                }
+            } catch (error: any) {
+                console.error("Erreur lors de la récupération du profil:", error);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const handleSaveProfile = async () => {
         try {
@@ -40,8 +73,10 @@ const ProfileData = () => {
                 return;
             }
 
+            const userNomComplet = nomComplet || 'Utilisateur';
+            
             const caloriesNecessaires = await saveUserProfile(
-                'Nom Complet', 
+                userNomComplet, 
                 poids,
                 taille,
                 age,

@@ -35,18 +35,28 @@ const ProfileSetup = () => {
 
         setLoading(true);
         try {
+            const userData = {
+                nomComplet: nomComplet.trim(),
+                email: user.email || '',
+                id: user.uid,
+                role: 'utilisateur', 
+                dateCreation: new Date(),
+                dateModification: new Date(),
+                derniereConnexion: new Date(),
+                derniereModification: new Date(),
+            };
+
             await setDoc(
                 doc(db, 'utilisateurs', user.uid),
-                {
-                    nomComplet,
-                    dateModification: new Date(),
-                },
+                userData,
                 { merge: true }
             );
 
+            console.log('Profil enregistré:', userData);
             router.replace('/ProfileData');
             Alert.alert('Succès', 'Profil mis à jour avec succès!');
         } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
             const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue.';
             Alert.alert('Erreur', errorMessage);
         } finally {

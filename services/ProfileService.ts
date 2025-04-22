@@ -1,14 +1,46 @@
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, getDoc } from "firebase/firestore";
+import app from "../firebase/firebaseConfig";
 
 export class ProfileService {
-  private db = getFirestore();
-  private auth = getAuth();
+  private db = getFirestore(app);
+  private auth = getAuth(app);
 
-  async updateUserField(
-userId: string, fieldName: string, newValue: string  ): Promise<void> {
+  async getUserData(userId: string): Promise<any> {
     try {
       const userRef = doc(this.db, "utilisateurs", userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        throw new Error("Aucune donnée utilisateur trouvée");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données utilisateur:", error);
+      throw error;
+    }
+  }
+
+  async updateUserField(userId: string, fieldName: string, newValue: string): Promise<void> {
+    try {
+      const userRef = doc(this.db, "utilisateurs", userId);
+      
+      // Convertir les valeurs numériques si nécessaire
+      let processedValue: any = newValue;
+      if (fieldName === "poids" || fieldName === "taille" || fieldName === "caloriesNecessaires") {
+        processedValue = parseFloat(newValue);
+      } else if (fieldName === "age") {
+        processedValue = parseInt(newValue, 10);
+      }
+      
+      // Mettre à jour le champ
+      await updateDoc(userRef, {
+        [fieldName]: processedValue,
+        derniereModification: new Date()
+      });
+      
+      console.log(`Champ ${fieldName} mis à jour avec succès.`);
     } catch (error) {
       console.error("Erreur lors de la mise à jour :", error);
       throw error;

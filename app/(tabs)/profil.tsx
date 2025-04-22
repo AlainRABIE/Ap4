@@ -104,6 +104,34 @@ const ViewProfilePage: React.FC = () => {
         useNativeDriver: true,
       })
     ]).start();
+    
+    const loadUserData = async () => {
+      if (user && user.uid) {
+        try {
+          console.log("Chargement des données utilisateur pour UID:", user.uid);
+          const userData = await profileService.getUserData(user.uid);
+          console.log("Données utilisateur récupérées:", userData);
+          
+          if (userData) {
+            setUser({
+              ...user,
+              nomComplet: userData.nomComplet,
+              poids: userData.poids,
+              taille: userData.taille,
+              age: userData.age,
+              sexe: userData.sexe,
+              niveauActivite: userData.niveauActivite,
+              caloriesNecessaires: userData.caloriesNecessaires,
+              urlAvatar: userData.urlAvatar
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors du chargement des données utilisateur:", error);
+        }
+      }
+    };
+    
+    loadUserData();
   }, []);
 
   const bmiData = useMemo(() => {
