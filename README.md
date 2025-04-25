@@ -1,1 +1,10 @@
-ok alors j'hesite avec le nom regarde sa NutriMotion j'aime bien sah 
+Voici mon AP4 qui est NUTRIMOTION
+
+Identifiant utilisateur basic : utilisateur@gmail.com 
+Mots de passe : utilisateur123
+
+Identifiant Administrateur : admin@gmail.com 
+Mots de passe : admin123
+
+Identifiant coach : coach@gmail.com 
+Mots de passe : coach123
