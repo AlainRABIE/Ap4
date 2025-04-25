@@ -26,7 +26,6 @@ export class ProfileService {
     try {
       const userRef = doc(this.db, "utilisateurs", userId);
       
-      // Convertir les valeurs numériques si nécessaire
       let processedValue: any = newValue;
       if (fieldName === "poids" || fieldName === "taille" || fieldName === "caloriesNecessaires") {
         processedValue = parseFloat(newValue);
@@ -34,7 +33,6 @@ export class ProfileService {
         processedValue = parseInt(newValue, 10);
       }
       
-      // Mettre à jour le champ
       await updateDoc(userRef, {
         [fieldName]: processedValue,
         derniereModification: new Date()

@@ -57,7 +57,6 @@ const RecettePage = () => {
       const data = await response.json();
 
       const translatedText = data.responseData.translatedText as string;
-      // for each occurence of %20 in the translatedText, replace it with a space, each %2C with a comma, eacch %26 with an ampersand
       const uncodedText = translatedText
         .replace(/%20/g, ' ')
         .replace(/%2C/g, ',')

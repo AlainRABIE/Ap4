@@ -29,7 +29,7 @@ export default function AdminProfile() {
     lastLogin: '',
     photoURL: 'https://www.gravatar.com/avatar/?d=mp',
     sessionPrice: '0',
-    niveauActivite: '' // Ajout du niveau d'activité
+    niveauActivite: '' 
   });
   const [loading, setLoading] = useState(true);
   const [editingPrice, setEditingPrice] = useState(false);
