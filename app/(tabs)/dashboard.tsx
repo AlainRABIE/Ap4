@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, query, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
-import { styles as baseStyles } from '@/style/profil/profilStyles';
+import { styles as baseStyles } from '../../style/profil/profilStyles';
 import { useRouter } from 'expo-router';
 
 const styles = {
@@ -292,34 +292,47 @@ export default function AdminDashboard() {
       
       setRecentActivities(activities);
       
-      const logs: LogEntry[] = [];
-      activities.slice(0, 5).forEach(activity => {
-        logs.push({
-          type: 'info',
-          message: `Dernière connexion: ${activity.user || activity.email}`,
-          timestamp: formatDate(activity.timestamp),
-          id: `login-${activity.id}`
+      const logs: LogEntry[] = [];      if (Array.isArray(activities)) {
+        activities.slice(0, 5).forEach(activity => {
+          if (!activity) return;
+          logs.push({
+            type: 'info',
+            message: `Dernière connexion: ${activity.user || activity.email || 'Utilisateur inconnu'}`,
+            timestamp: formatDate(activity.timestamp || new Date()),
+            id: `login-${activity.id || Date.now().toString()}`
+          });
         });
-      });
+      }
       
       const modifiedUsersQuery = query(usersRef, orderBy('dateModification', 'desc'), limit(5));
       const modifiedUsersSnapshot = await getDocs(modifiedUsersQuery);
-      
-      modifiedUsersSnapshot.docs.forEach(doc => {
+        modifiedUsersSnapshot.docs.forEach(doc => {
         const userData = doc.data();
+        if (!userData) return;
         logs.push({
           type: 'warning',
-          message: `Profil modifié: ${userData.nomComplet || userData.email}`,
-          timestamp: formatDate(userData.dateModification),
+          message: `Profil modifié: ${userData.nomComplet || userData.email || 'Utilisateur inconnu'}`,
+          timestamp: formatDate(userData.dateModification || new Date()),
           id: `modified-${doc.id}`
         });
       });
-      
-      logs.sort((a, b) => {
-        const dateA = new Date(a.timestamp);
-        const dateB = new Date(b.timestamp);
-        return dateB.getTime() - dateA.getTime();
-      });
+        try {
+        logs.sort((a, b) => {
+          try {
+            const dateA = new Date(a.timestamp || '');
+            const dateB = new Date(b.timestamp || '');
+            if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+              return 0; // Si l'une des dates est invalide, ne pas modifier l'ordre
+            }
+            return dateB.getTime() - dateA.getTime();
+          } catch (err) {
+            console.error("Erreur lors du tri des dates:", err);
+            return 0; // En cas d'erreur, ne pas modifier l'ordre
+          }
+        });
+      } catch (err) {
+        console.error("Erreur lors du tri des logs:", err);
+      }
       
       setDatabaseLogs(logs);
       
