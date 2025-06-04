@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from 'react';
 import { 
   View, 
@@ -52,7 +50,7 @@ export default function PlanningScreen() {
   }, [hasChanges]);
 
   const getDatesForSelectedWeek = () => {
-    const dates = [];
+    const dates: Date[] = [];
     const today = new Date();
     const dayOfWeek = today.getDay(); 
     const startDate = new Date(today);
@@ -69,7 +67,7 @@ export default function PlanningScreen() {
   };
 
   const getTimeSlots = () => {
-    const slots = [];
+    const slots: string[] = [];
     for (let hour = 8; hour <= 20; hour++) {
       slots.push(`${hour}:00`);
     }
