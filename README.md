@@ -1,6 +1,15 @@
-## Suite à la nouvelle mise à jour de Expo SDK 53 le sujet est actuellement plus fonctionnelle je me penche sur le sujet pour le rendre fonctionnelle très rapidement
+## Application mis à jour avec le SDK 53 de Expo
+
 
 Voici mon AP4 qui est NUTRIMOTION
+
+Pour éxécutée l'application il vous suffit de :
+- vous rendre sur visual studio code
+- puis la 3ème icone (github)
+- collée cette url  https://github.com/AlainRABIE/Ap4.git
+- puis faire npm install
+- pour finir npx expo start
+- et enfin scannée le qrcode 
 
 Identifiant utilisateur basic : utilisateur@gmail.com 
 Mots de passe : utilisateur123
