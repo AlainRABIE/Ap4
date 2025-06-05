@@ -48,8 +48,7 @@ export default function PlanningScreen() {
       });
     }
   }, [hasChanges]);
-
-  const getDatesForSelectedWeek = () => {
+  const getDatesForSelectedWeek = (): Date[] => {
     const dates: Date[] = [];
     const today = new Date();
     const dayOfWeek = today.getDay(); 
@@ -65,8 +64,7 @@ export default function PlanningScreen() {
     }
     return dates;
   };
-
-  const getTimeSlots = () => {
+  const getTimeSlots = (): string[] => {
     const slots: string[] = [];
     for (let hour = 8; hour <= 20; hour++) {
       slots.push(`${hour}:00`);
@@ -76,12 +74,11 @@ export default function PlanningScreen() {
 
   const dates = getDatesForSelectedWeek();
   const timeSlots = getTimeSlots();
-  
-  const [availability, setAvailability] = useState(() => {
+    const [availability, setAvailability] = useState<number[][]>(() => {
     return timeSlots.map(() => Array(7).fill(STATUS.UNDEFINED));
   });
   
-  const [originalAvailability, setOriginalAvailability] = useState(() => {
+  const [originalAvailability, setOriginalAvailability] = useState<number[][]>(() => {
     return timeSlots.map(() => Array(7).fill(STATUS.UNDEFINED));
   });
 
@@ -94,8 +91,7 @@ export default function PlanningScreen() {
     
     checkForChanges(newAvailability);
   };
-
-  const checkForChanges = (newAvailability: any[][]) => {
+  const checkForChanges = (newAvailability: number[][]) => {
     for (let i = 0; i < timeSlots.length; i++) {
       for (let j = 0; j < 7; j++) {
         if (newAvailability[i][j] !== originalAvailability[i][j]) {
@@ -222,7 +218,7 @@ export default function PlanningScreen() {
         return;
       }
 
-      const newAvailability = timeSlots.map(() => Array(7).fill(STATUS.UNDEFINED));
+      const newAvailability: number[][] = timeSlots.map(() => Array(7).fill(STATUS.UNDEFINED));
 
       for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
         const currentDate = dates[dateIndex];
@@ -340,8 +336,7 @@ export default function PlanningScreen() {
       setLoading(false);
     }
   };
-
-  const getCellStyle = (status: any) => {
+  const getCellStyle = (status: number) => {
     switch(status) {
       case STATUS.AVAILABLE:
         return styles.availableCell;
@@ -352,7 +347,7 @@ export default function PlanningScreen() {
     }
   };
 
-  const getCellText = (status: any) => {
+  const getCellText = (status: number) => {
     switch(status) {
       case STATUS.AVAILABLE:
         return '✓';

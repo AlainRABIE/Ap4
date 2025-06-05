@@ -1,6 +1,5 @@
-'use client';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 
 interface Forfait {
     id?: string;
@@ -19,19 +18,16 @@ export default function ForfaitPage() {
         description: ''
     });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+    const handleInputChange = (name: string, value: string) => {
         setNewForfait({
             ...newForfait,
             [name]: name === 'price' || name === 'numberOfSessions' ? Number(value) : value
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        
+    const handleSubmit = () => {        
         if (!newForfait.name || newForfait.price <= 0 || newForfait.numberOfSessions <= 0) {
-            alert("Erreur: Veuillez remplir tous les champs correctement");
+            Alert.alert("Erreur", "Veuillez remplir tous les champs correctement");
             return;
         }
         
@@ -45,134 +41,231 @@ export default function ForfaitPage() {
             description: ''
         });
         
-        alert("Le forfait a été ajouté avec succès");
+        Alert.alert("Succès", "Le forfait a été ajouté avec succès");
     };
 
     const deleteForfait = (id: string) => {
-        setForfaits(forfaits.filter(forfait => forfait.id !== id));
-        alert("Le forfait a été supprimé avec succès");
+        Alert.alert(
+            "Confirmation",
+            "Êtes-vous sûr de vouloir supprimer ce forfait ?",
+            [
+                { text: "Annuler", style: "cancel" },
+                { 
+                    text: "Supprimer", 
+                    style: "destructive",
+                    onPress: () => {
+                        setForfaits(forfaits.filter(forfait => forfait.id !== id));
+                        Alert.alert("Succès", "Le forfait a été supprimé avec succès");
+                    }
+                }
+            ]
+        );
     };
 
     return (
-        <div className="container" style={{ maxWidth: "1200px", margin: "0 auto", padding: "1rem" }}>
-            <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1.5rem" }}>Gestion des forfaits</h1>
+        <ScrollView style={styles.container}>
+            <Text style={styles.title}>Gestion des forfaits</Text>
             
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
-                <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "1rem" }}>
-                    <div style={{ marginBottom: "1rem" }}>
-                        <h2 style={{ fontSize: "1.25rem", fontWeight: "bold" }}>Ajouter un nouveau forfait</h2>
-                        <p style={{ color: "#666" }}>Créez un forfait pour vos séances de coaching</p>
-                    </div>
-                    <form onSubmit={handleSubmit}>
-                        <div style={{ marginBottom: "1rem" }}>
-                            <div style={{ marginBottom: "0.5rem" }}>
-                                <label htmlFor="name" style={{ display: "block", marginBottom: "0.25rem" }}>Nom du forfait</label>
-                                <input 
-                                    id="name" 
-                                    name="name" 
-                                    value={newForfait.name} 
-                                    onChange={handleInputChange} 
-                                    placeholder="Ex: Pack 10 séances"
-                                    style={{ width: "100%", padding: "0.5rem", border: "1px solid #ddd", borderRadius: "4px" }}
-                                />
-                            </div>
-                            
-                            <div style={{ marginBottom: "0.5rem" }}>
-                                <label htmlFor="price" style={{ display: "block", marginBottom: "0.25rem" }}>Prix (€)</label>
-                                <input 
-                                    id="price" 
-                                    name="price" 
-                                    type="number" 
-                                    min="0" 
-                                    step="0.01" 
-                                    value={newForfait.price} 
-                                    onChange={handleInputChange}
-                                    style={{ width: "100%", padding: "0.5rem", border: "1px solid #ddd", borderRadius: "4px" }}
-                                />
-                            </div>
-                            
-                            <div style={{ marginBottom: "0.5rem" }}>
-                                <label htmlFor="numberOfSessions" style={{ display: "block", marginBottom: "0.25rem" }}>Nombre de séances</label>
-                                <input 
-                                    id="numberOfSessions" 
-                                    name="numberOfSessions" 
-                                    type="number" 
-                                    min="1" 
-                                    value={newForfait.numberOfSessions} 
-                                    onChange={handleInputChange}
-                                    style={{ width: "100%", padding: "0.5rem", border: "1px solid #ddd", borderRadius: "4px" }}
-                                />
-                            </div>
-                            
-                            <div style={{ marginBottom: "0.5rem" }}>
-                                <label htmlFor="description" style={{ display: "block", marginBottom: "0.25rem" }}>Description</label>
-                                <textarea 
-                                    id="description" 
-                                    name="description" 
-                                    value={newForfait.description} 
-                                    onChange={handleInputChange} 
-                                    placeholder="Détails du forfait..."
-                                    style={{ width: "100%", padding: "0.5rem", border: "1px solid #ddd", borderRadius: "4px", minHeight: "100px" }}
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <button 
-                                type="submit"
-                                style={{ 
-                                    backgroundColor: "#2563eb", 
-                                    color: "white", 
-                                    padding: "0.5rem 1rem", 
-                                    borderRadius: "4px",
-                                    border: "none",
-                                    cursor: "pointer"
-                                }}
-                            >
-                                Ajouter le forfait
-                            </button>
-                        </div>
-                    </form>
-                </div>
+            <View style={styles.formContainer}>
+                <Text style={styles.sectionTitle}>Ajouter un nouveau forfait</Text>
+                <Text style={styles.sectionSubtitle}>Créez un forfait pour vos séances de coaching</Text>
                 
-                <div>
-                    <h2 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem" }}>Forfaits disponibles</h2>
-                    {forfaits.length === 0 ? (
-                        <p style={{ color: "#666" }}>Aucun forfait n'a été créé</p>
-                    ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                            {forfaits.map((forfait) => (
-                                <div key={forfait.id} style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "1rem" }}>
-                                    <div style={{ marginBottom: "0.5rem" }}>
-                                        <h3 style={{ fontSize: "1.125rem", fontWeight: "bold" }}>{forfait.name}</h3>
-                                        <p style={{ color: "#666" }}>
-                                            {forfait.numberOfSessions} séance{forfait.numberOfSessions > 1 ? 's' : ''} - {forfait.price}€
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: "1rem" }}>
-                                        <p>{forfait.description}</p>
-                                    </div>
-                                    <div>
-                                        <button 
-                                            onClick={() => forfait.id && deleteForfait(forfait.id)}
-                                            style={{ 
-                                                backgroundColor: "#ef4444", 
-                                                color: "white", 
-                                                padding: "0.25rem 0.75rem", 
-                                                fontSize: "0.875rem",
-                                                borderRadius: "4px",
-                                                border: "none",
-                                                cursor: "pointer"
-                                            }}
-                                        >
-                                            Supprimer
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Nom du forfait</Text>
+                    <TextInput 
+                        style={styles.input}
+                        value={newForfait.name} 
+                        onChangeText={(value) => handleInputChange('name', value)}
+                        placeholder="Ex: Pack 10 séances"
+                        placeholderTextColor="#999"
+                    />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Prix (€)</Text>
+                    <TextInput 
+                        style={styles.input}
+                        value={newForfait.price.toString()} 
+                        onChangeText={(value) => handleInputChange('price', value)}
+                        placeholder="0"
+                        placeholderTextColor="#999"
+                        keyboardType="numeric"
+                    />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Nombre de séances</Text>
+                    <TextInput 
+                        style={styles.input}
+                        value={newForfait.numberOfSessions.toString()} 
+                        onChangeText={(value) => handleInputChange('numberOfSessions', value)}
+                        placeholder="1"
+                        placeholderTextColor="#999"
+                        keyboardType="numeric"
+                    />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput 
+                        style={[styles.input, styles.textArea]}
+                        value={newForfait.description} 
+                        onChangeText={(value) => handleInputChange('description', value)}
+                        placeholder="Détails du forfait..."
+                        placeholderTextColor="#999"
+                        multiline
+                        numberOfLines={4}
+                    />
+                </View>
+                
+                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                    <Text style={styles.submitButtonText}>Ajouter le forfait</Text>
+                </TouchableOpacity>
+            </View>
+            
+            <View style={styles.listContainer}>
+                <Text style={styles.sectionTitle}>Forfaits disponibles</Text>
+                {forfaits.length === 0 ? (
+                    <Text style={styles.emptyText}>Aucun forfait n'a été créé</Text>
+                ) : (
+                    forfaits.map((forfait) => (
+                        <View key={forfait.id} style={styles.forfaitCard}>
+                            <Text style={styles.forfaitName}>{forfait.name}</Text>
+                            <Text style={styles.forfaitDetails}>
+                                {forfait.numberOfSessions} séance{forfait.numberOfSessions > 1 ? 's' : ''} - {forfait.price}€
+                            </Text>
+                            <Text style={styles.forfaitDescription}>{forfait.description}</Text>
+                            <TouchableOpacity 
+                                style={styles.deleteButton}
+                                onPress={() => forfait.id && deleteForfait(forfait.id)}
+                            >
+                                <Text style={styles.deleteButtonText}>Supprimer</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))
+                )}
+            </View>
+        </ScrollView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+        padding: 16,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 24,
+        textAlign: 'center',
+        color: '#333',
+    },
+    formContainer: {
+        backgroundColor: 'white',
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        marginBottom: 8,
+        color: '#333',
+    },
+    sectionSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 16,
+    },
+    inputContainer: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 8,
+        color: '#333',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+        backgroundColor: '#fff',
+    },
+    textArea: {
+        height: 100,
+        textAlignVertical: 'top',
+    },
+    submitButton: {
+        backgroundColor: '#2563eb',
+        borderRadius: 8,
+        padding: 16,
+        alignItems: 'center',
+    },
+    submitButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    listContainer: {
+        backgroundColor: 'white',
+        borderRadius: 8,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    emptyText: {
+        color: '#666',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginTop: 16,
+    },
+    forfaitCard: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 12,
+        backgroundColor: '#f9f9f9',
+    },
+    forfaitName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 4,
+        color: '#333',
+    },
+    forfaitDetails: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 8,
+    },
+    forfaitDescription: {
+        fontSize: 14,
+        color: '#333',
+        marginBottom: 12,
+    },
+    deleteButton: {
+        backgroundColor: '#ef4444',
+        borderRadius: 6,
+        padding: 8,
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+    },
+    deleteButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+});

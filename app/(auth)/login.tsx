@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   TextInput, 
@@ -25,8 +25,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const fadeAnim = useState(new Animated.Value(0))[0];
-
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,

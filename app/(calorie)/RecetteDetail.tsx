@@ -50,7 +50,7 @@ const RecetteDetail = () => {
         if (data.meals && data.meals.length > 0) {
           const mealData = data.meals[0];
           
-          const ingredients = [];
+          const ingredients: { ingredient: string; measure: string }[] = [];
           for (let i = 1; i <= 20; i++) {
             const ingredient = mealData[`strIngredient${i}`];
             const measure = mealData[`strMeasure${i}`];

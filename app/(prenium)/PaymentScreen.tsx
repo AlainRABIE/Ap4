@@ -1,31 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, Image } from 'react-native';
-import { CardField, useStripe, CardFieldInput, initStripe } from '@stripe/stripe-react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { STRIPE_PUBLISHABLE_KEY } from '../../config/stripe';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import app from '../../firebase/firebaseConfig'; 
+import app from '../../firebase/firebaseConfig';
+import { AboService } from '../../services/abo';
 
 export default function PaymentScreen() {
-  const { createPaymentMethod, confirmPayment } = useStripe();
   const [loading, setLoading] = useState(false);
-  const [cardDetails, setCardDetails] = useState<CardFieldInput.Details | null>(null);
   
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const aboService = new AboService();
 
   const params = useLocalSearchParams();
   const planName = params.planName as string;
   const planPrice = params.planPrice as string;
   const planPeriod = params.planPeriod as string;
-
-  useEffect(() => {
-    initStripe({
-      publishableKey: STRIPE_PUBLISHABLE_KEY,
-      merchantIdentifier: 'merchant.com.votre.app',
-    });
-  }, []);
 
   const updateUserSubscription = async () => {
     try {
@@ -50,35 +41,21 @@ export default function PaymentScreen() {
       throw error;
     }
   };
-
   const handlePayment = async () => {
-    if (!cardDetails?.complete) {
-      Alert.alert('Information incomplète', 'Veuillez remplir toutes les informations de carte bancaire');
-      return;
-    }
-
     try {
       setLoading(true);
 
-      const { paymentMethod, error } = await createPaymentMethod({
-        paymentMethodType: 'Card',
-        paymentMethodData: {
-          billingDetails: {
-            name: 'Utilisateur Premium',
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulation d'un délai de traitement
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       await updateUserSubscription();
 
+      // Mettre à jour le service d'abonnement local
+      const subscriptionType = planName.toLowerCase().includes('plus') ? 'plus' : 'basic';
+      aboService.setSubscription(subscriptionType);
+
       Alert.alert(
-        'Paiement réussi!',
+        'Abonnement activé!',
         'Votre abonnement premium est maintenant actif.',
         [
           {
@@ -98,7 +75,7 @@ export default function PaymentScreen() {
       );
 
     } catch (error) {
-      Alert.alert('Erreur de paiement', error instanceof Error ? error.message : 'Une erreur inconnue est survenue');
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Une erreur inconnue est survenue');
     } finally {
       setLoading(false);
     }
@@ -119,46 +96,29 @@ export default function PaymentScreen() {
           • Support premium{'\n'}
           • Sans publicités
         </Text>
-      </View>
+      </View>      <View style={styles.cardContainer}>
+        <Text style={styles.sectionTitle}>Méthode de paiement</Text>
 
-      <View style={styles.cardContainer}>
-        <Text style={styles.sectionTitle}>Informations de paiement</Text>
-
-        <View style={styles.secureInfo}>
-          <Image 
-            source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2913/2913658.png' }} 
-            style={styles.lockIcon} 
-          />
-          <Text style={styles.secureText}>Paiement sécurisé via Stripe</Text>
+        <View style={styles.paymentMethodCard}>
+          <Text style={styles.paymentMethodTitle}>Paiement sécurisé</Text>
+          <Text style={styles.paymentMethodDesc}>
+            Votre abonnement sera activé immédiatement après confirmation.
+          </Text>
         </View>
-
-        <CardField
-          postalCodeEnabled={true}
-          placeholders={{
-            number: '4242 4242 4242 4242',
-            expiration: 'MM/AA',
-            cvc: 'CVC',
-          }}
-          cardStyle={styles.cardStyle}
-          style={styles.cardField}
-          onCardChange={setCardDetails}
-        />
       </View>
 
       <TouchableOpacity 
-        style={[styles.payButton, !cardDetails?.complete && styles.payButtonDisabled]} 
+        style={styles.payButton} 
         onPress={handlePayment}
-        disabled={loading || !cardDetails?.complete}
+        disabled={loading}
       >
         {loading ? (
           <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Text style={styles.payButtonText}>Payer par Carte</Text>
+          <Text style={styles.payButtonText}>Confirmer l'abonnement</Text>
         )}
-      </TouchableOpacity>
-
-      <Text style={styles.termsText}>
-        En effectuant ce paiement, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité.
+      </TouchableOpacity>      <Text style={styles.termsText}>
+        En confirmant cet abonnement, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité.
         Votre abonnement sera automatiquement renouvelé chaque mois jusqu'à annulation.
       </Text>
     </SafeAreaView>
@@ -210,38 +170,29 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     marginBottom: 24,
-  },
-  sectionTitle: {
+  },  sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 16,
     color: '#1E293B',
   },
-  secureInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  lockIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 6,
-  },
-  secureText: {
-    fontSize: 13,
-    color: '#64748B',
-  },
-  cardField: {
-    width: '100%',
-    height: 50,
-    marginVertical: 8,
-  },
-  cardStyle: {
+  paymentMethodCard: {
     backgroundColor: '#F8FAFC',
-    color: '#1E293B',
     borderRadius: 8,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#CBD5E1',
+  },
+  paymentMethodTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  paymentMethodDesc: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
   },
   payButton: {
     backgroundColor: '#0EA5E9',
@@ -249,9 +200,6 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 16,
-  },
-  payButtonDisabled: {
-    backgroundColor: '#CBD5E1',
   },
   payButtonText: {
     color: '#FFFFFF',
@@ -265,4 +213,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   }
 });
-

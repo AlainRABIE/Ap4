@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import {
   View,
   Text,
@@ -160,9 +160,8 @@ export default function CoachScreen() {
       Alert.alert('Erreur', "Impossible de modifier le rôle du coach.");
     }
   };
-
   const renderStars = (rating: number = 0) => {
-    const stars = [];
+    const stars: ReactNode[] = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating - fullStars >= 0.5;
     
