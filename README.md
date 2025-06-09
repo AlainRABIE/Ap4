@@ -3,7 +3,7 @@
 
 Voici mon AP4 qui est NUTRIMOTION
 
-Pour éxecutée l'application il vous suffit de :
+Pour Run l'application il vous suffit de :
 - vous rendre sur visual studio code
 - puis la 3ème icone (github)
 - collée cette url  https://github.com/AlainRABIE/Ap4.git
